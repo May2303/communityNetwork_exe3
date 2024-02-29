@@ -17,12 +17,12 @@ int main(int argc, char *argv[]) {
 
 
     // Read the created file
-    char *filename[BUFFER_SIZE];
-    for(int i=0; i<BUFFER_SIZE; i++){
-    scanf(" %s", &filename[i]);}
+    char filename[BUFFER_SIZE];
+    printf("Enter the filename: ");
+    scanf("%s", filename);
 
 
-    FILE *file = fopen("your_filename.txt", "rb");
+    FILE *file = fopen(filename, "rb");
     if (file == NULL) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
@@ -38,64 +38,70 @@ int main(int argc, char *argv[]) {
     }
 
 
-    // struct of socket
+    // Set up connection parameters
     struct sockaddr_in serverAddress;
     memset(&serverAddress, 0, sizeof(serverAddress));
-
-
-
-    // Set up connection parameters
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(RECIVER_PORT);
 	int rval = inet_pton(AF_INET, (const char*)RECIVER_IP, &serverAddress.sin_addr);
 	if (rval <= 0)
 	{
 		printf("inet_pton() failed");
-		return -1;
+        close(sock);
+		exit(EXIT_FAILURE);
 	}
 
 
     // Connect to the receiver
-    // Make a connection to the server with socket SendingSocket.
+     if (connect(sock, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) == -1){
+	   printf("connect() failed with error code");
+       fclose(file);
+       close(sock);
+       exit(EXIT_FAILURE);
+    } 
+       
+  //if the connection secceed  
+   printf("connected to server\n");
 
-     if (connect(sock, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) == -1)
-     {
-	   printf("connect() failed with error code");} 
-       //if the connection secceed  
-       printf("connected to server\n");
+     while (1) {
+        // Read the created file
+        char filename[BUFFER_SIZE];
+        printf("Enter the filename: ");
+        scanf("%s", filename);
 
+        FILE *file = fopen(filename, "rb");
+        if (file == NULL) {
+            perror("Error opening file");
+            // Continue to the next iteration of the loop
+            continue;
+        }
 
-    // Send the file 
-    // ------ PROBLEM: CHECK IF THE BUFFER_SIZE IS THE INPUT
-    int bytesSent = send(sock, file, BUFFER_SIZE, 0);
+        // Send the file
+        char buffer[BUFFER_SIZE];
+        size_t bytesRead;
+        while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+            int bytesSent = send(sock, buffer, bytesRead, 0);
+            if (bytesSent == -1) {
+                perror("send() failed");
+                break;
+            }
+        }
 
-     if (-1 == bytesSent)
-     {
-	printf("send() failed with error code"); }
+        // User decision: Send the file again or exit
+        printf("Do you want to send another file? (y/n): ");
+        char decision;
+        scanf(" %c", &decision);
 
-     else if (0 == bytesSent)
-     {
-	printf("peer has closed the TCP connection prior to send().\n");}
+        if (decision != 'y' && decision != 'Y') {
+            // If the user enters something other than 'y' or 'Y', exit the loop
+            break;
+        }
 
-     else if (BUFFER_SIZE > bytesSent)
-     {
-	printf("sent only %d bytes from the required %d.\n", BUFFER_SIZE, bytesSent);}
-
-     else 
-     {
-	printf("message was successfully sent .\n");}
-    
-
-    // User decision: Send the file again or exit ---- ??? 
-    Sleep(3000);
-
-    // Send exit message to the receiver
-    // ...
+        // Close the current file
+        fclose(file);
+    }
 
     // Close the TCP connection
-    closesocket(sock);
-
-    // Exit
     close(sock);
 
     return 0;
