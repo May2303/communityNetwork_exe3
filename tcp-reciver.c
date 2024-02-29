@@ -7,6 +7,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <time.h>
 
 #define BUFFER_SIZE 1024
 #define SERVER_PORT 5060 //PROBLEM: I NEED TO FIX THIS!!
@@ -31,7 +32,7 @@ int main(int argc, char *argv[]) {
 
 
     // "sockaddr_in" is the "derived" from sockaddr structure
-     struct sockaddr_in serverAddress;
+    struct sockaddr_in serverAddress;
     memset(&serverAddress, 0, sizeof(serverAddress));
 
     serverAddress.sin_family = AF_INET;
@@ -40,11 +41,13 @@ int main(int argc, char *argv[]) {
 
 
     // Create a TCP socket
+    /*
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
         perror("Error creating socket");
         exit(EXIT_FAILURE);
     }
+    */
 
     // Bind the socket to a specific port
     if (bind(listeningSocket, 
@@ -87,23 +90,48 @@ int main(int argc, char *argv[]) {
       
     	printf("A new client connection accepted\n");
 
+    // Receive file, measure time, and save it
+        time_t start_time, end_time;
+        time(&start_time); // Start time measurement
+
+        FILE *receivedFile = fopen("received_file.txt", "wb");
+        if (receivedFile == NULL) {
+            perror("Error opening file for writing");
+            close(clientSocket);
+            close(listeningSocket);
+            exit(EXIT_FAILURE);
+        }
+
+        char buffer[BUFFER_SIZE];
+        ssize_t bytesRead;
+
+        while ((bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0)) > 0) {
+            fwrite(buffer, 1, bytesRead, receivedFile);
+        }
+
+        if (bytesRead < 0) {
+            perror("Error receiving file");
+            fclose(receivedFile);
+            close(clientSocket);
+            close(listeningSocket);
+            exit(EXIT_FAILURE);
+        }
+
+        fclose(receivedFile);
+        time(&end_time); // End time measurement
+
+        printf("File received successfully.\n");
+
+        // Calculate and print the time taken
+        double elapsed_time = difftime(end_time, start_time);
+        printf("Time taken: %.2f seconds\n", elapsed_time);
+
+        // Close client socket
+        close(clientSocket);
     }
 
-   
-
-
-
-    // Print out times and average bandwidth
-    // ...
-
-    // Calculate average time and total average bandwidth
-    // ...
-
-    // Close the TCP connection
+    // Close listening socket (Note: This part will never be reached in this code because of the infinite loop)
     close(listeningSocket);
-
-    // Exit
-    // ...
 
     return 0;
 }
