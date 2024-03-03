@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s -ip <receiver_ip> -port <receiver_port> -algo <congestion_algorithm>\n", argv[0]);
         return -1;
     }
+    printf("Reading input..");
 
     const char *receiver_ip = argv[2];
     int receiver_port = atoi(argv[4]);
