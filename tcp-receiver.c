@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
-        char *buffer = (char *)malloc(size);
+        char *buffer = (char *)malloc(BUFFER_SIZE);
         if (buffer == NULL) {
             printf("Error allocating memory for buffer\n");
             fclose(file);
