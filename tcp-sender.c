@@ -65,9 +65,9 @@ int main(int argc, char *argv[]) {
     }
 
     if (strcmp(congestion_algorithm, "reno") == 0) {
-        setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "reno", strlen("reno"));
+        setsockopt(sock, IPPROTO_TCP, congestion_algorithm, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "cubic", strlen("cubic"));
+        setsockopt(sock, IPPROTO_TCP, congestion_algorithm, "cubic", strlen("cubic"));
     } else {
         printf("Invalid congestion control algorithm specified.\n");
         close(sock);
