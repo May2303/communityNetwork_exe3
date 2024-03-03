@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
 
     const char *receiver_ip = argv[1];
     int receiver_port = atoi(argv[2]);
+      // Set TCP congestion control algorithm
     const char *congestion_algorithm = argv[3];
     const char *file_name = "random_file.bin";
 
@@ -58,12 +59,11 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // Set TCP congestion control algorithm
-    int algorithm = TCP_CONGESTION;
+  
     if (strcmp(congestion_algorithm, "reno") == 0) {
-        setsockopt(sock, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
+        setsockopt(sock, IPPROTO_TCP, congestion_algorithm, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        setsockopt(sock, IPPROTO_TCP, algorithm, "cubic", strlen("cubic"));
+        setsockopt(sock, IPPROTO_TCP, congestion_algorithm, "cubic", strlen("cubic"));
     } else {
         printf("Invalid congestion control algorithm specified.\n");
         close(sock);
