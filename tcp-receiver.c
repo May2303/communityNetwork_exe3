@@ -9,7 +9,7 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2 * 1024 * 1024 * 8 // 2 Megabytes buffer size
+#define BUFFER_SIZE 2097152 // 2 * 1024 * 1024 bytes
 
 void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t file_size_bytes) {
     double elapsed_time = difftime(end_time, start_time);
@@ -19,13 +19,13 @@ void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t f
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 6 || strcmp(argv[1], "-p") != 0 || strcmp(argv[3], "-algo") != 0) {
+    if (argc != 5 || strcmp(argv[1], "-p") != 0 || strcmp(argv[3], "-algo") != 0) {
         printf("Usage: %s -p <port> -algo <congestion_algorithm>\n", argv[0]);
         return -1;
     }
 
     int port = atoi(argv[2]);
-    const char *congestion_algorithm = argv[5];
+    const char *congestion_algorithm = argv[4];
     int enable_reuse = 1;
     int listening_socket = -1;
 
@@ -42,17 +42,17 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    int algorithm = TCP_CONGESTION;
     if (strcmp(congestion_algorithm, "reno") == 0) {
-        setsockopt(listening_socket, IPPROTO_TCP, congestion_algorithm, "reno", strlen("reno"));
+        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        setsockopt(listening_socket, IPPROTO_TCP, congestion_algorithm, "cubic", strlen("cubic"));
+        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "cubic", strlen("cubic"));
     } else {
         printf("Invalid congestion control algorithm specified.\n");
         close(listening_socket);
         return -1;
     }
 
-    // Bind the socket to a specific port
     struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
@@ -65,17 +65,14 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // Listen for incoming connections
     if (listen(listening_socket, 1) == -1) {
         perror("listen() failed");
         close(listening_socket);
         return -1;
     }
 
-    // Accept a connection from the sender
     printf("Waiting for incoming TCP connections...\n");
 
-    // Receive the file, measure the time, and save it
     struct sockaddr_in client_address;
     socklen_t client_address_len = sizeof(client_address);
 
@@ -89,11 +86,10 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
-        printf("A new client connection accepted\n");
+        printf("Received connection from %s\n", inet_ntoa(client_address.sin_addr));
 
-        // Receive file, measure time, and save it
         time_t start_time, end_time;
-        time(&start_time); // Start time measurement
+        time(&start_time);
 
         FILE *received_file = fopen("received_file.bin", "wb");
         if (received_file == NULL) {
@@ -121,46 +117,33 @@ int main(int argc, char *argv[]) {
         }
 
         fclose(received_file);
-        time(&end_time); // End time measurement
+        time(&end_time);
 
-        // Print received bytes and sender IP address
-        printf("Received %ld bytes of data from %s\n", total_bytes_received, inet_ntoa(client_address.sin_addr));
-        printf("Waiting for client response . . .\n");
+        printf("Received %zu bytes of data from %s\n", total_bytes_received, inet_ntoa(client_address.sin_addr));
 
-        // Receive client response
-        char response;
-        if (recv(client_socket, &response, sizeof(response), 0) <= 0) {
+        printf("Waiting for client response...\n");
+
+        char decision;
+        if (recv(client_socket, &decision, sizeof(decision), 0) <= 0) {
             perror("Error receiving client response");
             close(client_socket);
             close(listening_socket);
             return -1;
         }
 
-        if (response == 'y' || response == 'Y') {
-            printf("Client responded with 'y', sending sync byte . . .\n");
-            // Send a sync byte
-            char sync_byte = 0xFF;
-            if (send(client_socket, &sync_byte, sizeof(sync_byte), 0) <= 0) {
-                perror("Error sending sync byte");
-                close(client_socket);
-                close(listening_socket);
-                return -1;
-            }
+        if (decision == 'y') {
+            printf("Client responded with 'y', sending sync byte...\n");
+            send(client_socket, "S", 1, 0);
         } else {
             printf("Client responded with 'n'.\n");
         }
 
-        printf("Closing connection . . .\n");
-
-        // Calculate and print statistics
-        calculate_and_print_statistics(start_time, end_time, total_bytes_received);
-
-        // Close client socket
+        printf("Closing connection...\n");
         close(client_socket);
+
+        calculate_and_print_statistics(start_time, end_time, total_bytes_received);
     }
 
-    // Close listening socket
     close(listening_socket);
-
     return 0;
 }
