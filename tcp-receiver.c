@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) {
     }
 
     int port = atoi(argv[2]);
+    // Set TCP congestion control algorithm
     const char *congestion_algorithm = argv[4];
     int enable_reuse = 1;
     int listening_socket = -1;
@@ -42,8 +43,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // Set TCP congestion control algorithm
-    int algorithm = TCP_CONGESTION;
+    
     if (strcmp(congestion_algorithm, "reno") == 0) {
         setsockopt(listening_socket, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
