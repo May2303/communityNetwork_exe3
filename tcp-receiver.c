@@ -42,17 +42,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    int algorithm = TCP_CONGESTION;
-    if (strcmp(congestion_algorithm, "reno") == 0) {
-        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
-    } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "cubic", strlen("cubic"));
-    } else {
-        printf("Invalid congestion control algorithm specified.\n");
-        close(listening_socket);
-        return -1;
-    }
-
     struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
