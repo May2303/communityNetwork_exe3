@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(congestion_algorithm, "reno") == 0) {
         setsockopt(listening_socket, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "cubic", strlen("cubic"));
+        setsockopt(listening_socket, IPPROTO_TCP, congestion_algorithm, "cubic", strlen("cubic"));
     } else {
         printf("Invalid congestion control algorithm specified.\n");
         close(listening_socket);
