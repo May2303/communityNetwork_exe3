@@ -3,22 +3,22 @@
 all: TCP_Receiver TCP_Sender
 
 TCP_Receiver: tcp-receiver.c
-	gcc -o tcp-receiver tcp-receiver.c
+	gcc -o TCP_Receiver tcp-receiver.c
 
 TCP_Sender: tcp-sender.c
-	gcc -o tcp-sender tcp-sender.c
+	gcc -o TCP_Sender tcp-sender.c
 
 clean:
 	rm -f *.o tcp-receiver tcp-sender
 
 runs:
-	./tcp-receiver
+	./TCP_Receiver
 
 runc:
-	./tcp-sender
+	./TCP_Sender
 
 runs-strace:
-	strace -f ./tcp-receiver
+	strace -f ./TCP_Receiver
 
 runc-strace:
-	strace -f ./tcp-sender
+	strace -f ./TCP_Sender
