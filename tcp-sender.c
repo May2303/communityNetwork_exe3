@@ -46,9 +46,9 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    const char *receiver_ip = argv[1];
-    int receiver_port = atoi(argv[1]);
-    const char *congestion_algorithm = argv[1];
+    const char *receiver_ip = argv[2];
+    int receiver_port = atoi(argv[4]);
+    const char *congestion_algorithm = argv[6];
     const char *file_name = "random_file.bin";
 
     // Generate random file of at least 2MB size
@@ -104,7 +104,12 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
-        char buffer[BUFFER_SIZE];
+        char *buffer = (char *)malloc(BUFFER_SIZE);
+        if(buffer == NULL){
+            printf("Failed to create buffer \n");
+            free(buffer);
+            return -1;
+        }
         size_t bytes_read;
         while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
             ssize_t bytes_sent = send(sock, buffer, bytes_read, 0);
