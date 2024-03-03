@@ -46,6 +46,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    clock_t end_time = clock();
+
     const char *receiver_ip = argv[2];
     int receiver_port = atoi(argv[4]);
     const char *congestion_algorithm = argv[6];
@@ -113,7 +115,6 @@ int main(int argc, char *argv[]) {
         }
 
         fclose(file);
-        clock_t end_time = clock();
 
         printf("Successfully sent %ld bytes of data!\n", file_size_bytes);
 
@@ -139,8 +140,10 @@ int main(int argc, char *argv[]) {
 
         if (decision == 'n')
             break;
-        else if (decision == 'y')
+        else if (decision == 'y'){
             printf("Waiting for the server to be ready . . .\n");
+            end_time = clock();
+        }
 
     }
 
