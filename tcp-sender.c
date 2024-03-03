@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
     // Generate random file of at least 2MB size
     size_t file_size_bytes = BUFFER_SIZE;
     generate_random_file(file_name, file_size_bytes);
+    printf("Generated random file");
 
     // Create a TCP socket
     int sock = socket(AF_INET, SOCK_STREAM, 0);
