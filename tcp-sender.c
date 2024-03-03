@@ -37,7 +37,6 @@ void generate_random_file(const char *filename, size_t size) {
 
 void print_statistics(clock_t start_time, clock_t end_time, size_t file_size_bytes) {
     double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-    double bandwidth = file_size_bytes / elapsed_time;
     printf("Time taken: %.2f ms\n", elapsed_time);
 }
 
@@ -47,9 +46,9 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    const char *receiver_ip = argv[2];
-    int receiver_port = atoi(argv[4]);
-    const char *congestion_algorithm = argv[6];
+    const char *receiver_ip = argv[1];
+    int receiver_port = atoi(argv[1]);
+    const char *congestion_algorithm = argv[1];
     const char *file_name = "random_file.bin";
 
     // Generate random file of at least 2MB size
