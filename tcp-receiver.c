@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
         char *buffer = (char *)malloc(BUFFER_SIZE);
         if (buffer == NULL) {
             printf("Error allocating memory for buffer\n");
-            fclose(file);
+            free(buffer);
             return -1;
         }
         ssize_t bytes_read;
