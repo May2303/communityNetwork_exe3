@@ -88,7 +88,12 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
-        char buffer[BUFFER_SIZE];
+        char *buffer = (char *)malloc(size);
+        if (buffer == NULL) {
+            printf("Error allocating memory for buffer\n");
+            fclose(file);
+            return -1;
+        }
         ssize_t bytes_read;
         size_t total_bytes_received = 0;
 
