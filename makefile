@@ -1,6 +1,6 @@
 # Makefile for TCP project
 
-all: tcp-receiver tcp-sender
+all: TCP_Receiver TCP_Sender
 
 TCP_Receiver: tcp-receiver.c
 	gcc -o tcp-receiver tcp-receiver.c
