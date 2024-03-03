@@ -2,10 +2,10 @@
 
 all: tcp-receiver tcp-sender
 
-tcp-receiver: tcp-receiver.c
+TCP_Receiver: tcp-receiver.c
 	gcc -o tcp-receiver tcp-receiver.c
 
-tcp-sender: tcp-sender.c
+TCP_Sender: tcp-sender.c
 	gcc -o tcp-sender tcp-sender.c
 
 clean:

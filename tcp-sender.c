@@ -9,8 +9,7 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 1024
-#define FILE_SIZE_MB 2
+#define BUFFER_SIZE 2 * 1024 * 1024 * 8 // 2 Megabytes buffer size
 
 void generate_random_file(const char *filename, size_t size) {
     FILE *file = fopen(filename, "wb");
@@ -37,19 +36,18 @@ void generate_random_file(const char *filename, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 4) {
-        printf("Usage: %s <receiver_ip> <receiver_port> <congestion_algorithm>\n", argv[0]);
+    if (argc != 7 || strcmp(argv[1], "-ip") != 0 || strcmp(argv[3], "-p") != 0 || strcmp(argv[5], "-algo") != 0) {
+        printf("Usage: %s -ip <receiver_ip> -p <receiver_port> -algo <congestion_algorithm>\n", argv[0]);
         return -1;
     }
 
-    const char *receiver_ip = argv[1];
-    int receiver_port = atoi(argv[2]);
-      // Set TCP congestion control algorithm
-    const char *congestion_algorithm = argv[3];
+    const char *receiver_ip = argv[2];
+    int receiver_port = atoi(argv[4]);
+    const char *congestion_algorithm = argv[6];
     const char *file_name = "random_file.bin";
 
     // Generate random file of at least 2MB size
-    size_t file_size_bytes = FILE_SIZE_MB * 1024 * 1024 * 8; //Megabyte is 8m
+    size_t file_size_bytes = BUFFER_SIZE;
     generate_random_file(file_name, file_size_bytes);
 
     // Create a TCP socket
@@ -59,11 +57,14 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-  
+    // Set TCP congestion control algorithm
+    int algorithm;
     if (strcmp(congestion_algorithm, "reno") == 0) {
-        setsockopt(sock, IPPROTO_TCP, congestion_algorithm, "reno", strlen("reno"));
+        algorithm = TCP_CONGESTION;
+        setsockopt(sock, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        setsockopt(sock, IPPROTO_TCP, congestion_algorithm, "cubic", strlen("cubic"));
+        algorithm = TCP_CONGESTION;
+        setsockopt(sock, IPPROTO_TCP, algorithm, "cubic", strlen("cubic"));
     } else {
         printf("Invalid congestion control algorithm specified.\n");
         close(sock);

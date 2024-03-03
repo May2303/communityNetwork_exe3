@@ -9,7 +9,7 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2 * 1024 * 1024 * 8 // 2 Megabytes buffer size
 
 void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t file_size_bytes) {
     double elapsed_time = difftime(end_time, start_time);
@@ -25,7 +25,6 @@ int main(int argc, char *argv[]) {
     }
 
     int port = atoi(argv[2]);
-    // Set TCP congestion control algorithm
     const char *congestion_algorithm = argv[4];
     int enable_reuse = 1;
     int listening_socket = -1;
@@ -43,11 +42,14 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    
+    // Set TCP congestion control algorithm
+    int algorithm;
     if (strcmp(congestion_algorithm, "reno") == 0) {
-        setsockopt(listening_socket, IPPROTO_TCP, congestion_algorithm, "reno", strlen("reno"));
+        algorithm = TCP_CONGESTION;
+        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        setsockopt(listening_socket, IPPROTO_TCP, congestion_algorithm, "cubic", strlen("cubic"));
+        algorithm = TCP_CONGESTION;
+        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "cubic", strlen("cubic"));
     } else {
         printf("Invalid congestion control algorithm specified.\n");
         close(listening_socket);
@@ -97,7 +99,7 @@ int main(int argc, char *argv[]) {
         time_t start_time, end_time;
         time(&start_time); // Start time measurement
 
-        FILE *received_file = fopen("received_file.txt", "wb");
+        FILE *received_file = fopen("received_file.bin", "rb");
         if (received_file == NULL) {
             perror("Error opening file for writing");
             close(client_socket);
@@ -125,7 +127,34 @@ int main(int argc, char *argv[]) {
         fclose(received_file);
         time(&end_time); // End time measurement
 
-        printf("File received successfully.\n");
+        // Print received bytes and sender IP address
+        printf("Received %ld bytes of data from %s\n", total_bytes_received, inet_ntoa(client_address.sin_addr));
+        printf("Waiting for client response . . .\n");
+
+        // Receive client response
+        char response;
+        if (recv(client_socket, &response, sizeof(response), 0) <= 0) {
+            perror("Error receiving client response");
+            close(client_socket);
+            close(listening_socket);
+            return -1;
+        }
+
+        if (response == 'y' || response == 'Y') {
+            printf("Client responded with 'y', sending sync byte . . .\n");
+            // Send a sync byte
+            char sync_byte = 0xFF;
+            if (send(client_socket, &sync_byte, sizeof(sync_byte), 0) <= 0) {
+                perror("Error sending sync byte");
+                close(client_socket);
+                close(listening_socket);
+                return -1;
+            }
+        } else {
+            printf("Client responded with 'n'.\n");
+        }
+
+        printf("Closing connection . . .\n");
 
         // Calculate and print statistics
         calculate_and_print_statistics(start_time, end_time, total_bytes_received);
