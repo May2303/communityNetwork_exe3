@@ -1,3 +1,4 @@
+#include <netinet/tcp.h> 
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -9,12 +10,13 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2 * 1024 * 1024 * 8 // 2 Megabytes buffer size
+#define BUFFER_SIZE 2 * 1024 * 1024  // 2 Megabytes buffer size
 
-void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t file_size_bytes) {
+void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t total_bytes_received) {
     double elapsed_time = difftime(end_time, start_time);
-    double bandwidth = file_size_bytes / elapsed_time;
+    double bandwidth = total_bytes_received / elapsed_time;
     printf("Time taken: %.2f seconds\n", elapsed_time);
+    printf("Total bytes received: %zu\n", total_bytes_received);
     printf("Average bandwidth: %.2f bytes/second\n", bandwidth);
 }
 
@@ -37,6 +39,14 @@ int main(int argc, char *argv[]) {
     }
 
     if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &enable_reuse, sizeof(int)) < 0) {
+        perror("setsockopt() failed");
+        close(listening_socket);
+        return -1;
+    }
+
+    // Set TCP congestion control algorithm
+    int algorithm = TCP_CONGESTION;
+    if (setsockopt(listening_socket, IPPROTO_TCP, algorithm, congestion_algorithm, strlen(congestion_algorithm)) < 0) {
         perror("setsockopt() failed");
         close(listening_socket);
         return -1;
@@ -80,37 +90,30 @@ int main(int argc, char *argv[]) {
         time_t start_time, end_time;
         time(&start_time);
 
-        FILE *received_file = fopen("received_file.bin", "wb");
-        if (received_file == NULL) {
-            perror("Error opening file for writing");
-            close(client_socket);
-            close(listening_socket);
-            return -1;
-        }
-
         char *buffer = (char *)malloc(BUFFER_SIZE);
         if (buffer == NULL) {
             printf("Error allocating memory for buffer\n");
-            free(buffer);
-            return -1;
-        }
-        ssize_t bytes_read;
-        size_t total_bytes_received = 0;
-
-        while ((bytes_read = recv(client_socket, buffer, BUFFER_SIZE, 0)) > 0) {
-            fwrite(buffer, 1, bytes_read, received_file);
-            total_bytes_received += bytes_read;
-        }
-
-        if (bytes_read < 0) {
-            perror("Error receiving file");
-            fclose(received_file);
             close(client_socket);
             close(listening_socket);
             return -1;
         }
 
-        fclose(received_file);
+        size_t total_bytes_received = 0;
+        ssize_t bytes_received;
+
+        // Receive the file from the sender
+        while ((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) > 0) {
+            total_bytes_received += bytes_received;
+        }
+
+        if (bytes_received < 0) {
+            perror("Error receiving file");
+            free(buffer);
+            close(client_socket);
+            close(listening_socket);
+            return -1;
+        }
+
         time(&end_time);
 
         printf("Received %zu bytes of data from %s\n", total_bytes_received, inet_ntoa(client_address.sin_addr));
@@ -128,14 +131,19 @@ int main(int argc, char *argv[]) {
         if (decision == 'y') {
             printf("Client responded with 'y', sending sync byte...\n");
             send(client_socket, "S", 1, 0);
+        } else if (decision == 'n') {
+            printf("Client responded with 'n'. Exiting program...\n");
+            close(client_socket);
+            close(listening_socket);
+            free(buffer);
+            break;
         } else {
-            printf("Client responded with 'n'.\n");
+            printf("Invalid response received. Continuing loop...\n");
         }
 
-        printf("Closing connection...\n");
-        close(client_socket);
-
         calculate_and_print_statistics(start_time, end_time, total_bytes_received);
+
+        free(buffer);
     }
 
     close(listening_socket);

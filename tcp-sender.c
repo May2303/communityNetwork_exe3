@@ -9,7 +9,7 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2 * 1024 * 1024 * 8 // 2 Megabytes buffer size
+#define BUFFER_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
 
 void generate_random_file(const char *filename, size_t size) {
     FILE *file = fopen(filename, "wb");
@@ -55,44 +55,33 @@ int main(int argc, char *argv[]) {
     size_t file_size_bytes = BUFFER_SIZE;
     generate_random_file(file_name, file_size_bytes);
 
-    
+    // Create a TCP socket
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1) {
+        perror("Error creating socket");
+        return -1;
+    }
 
-    char decision='n';
+    // Set up connection parameters
+    struct sockaddr_in server_address;
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(receiver_port);
+    inet_pton(AF_INET, receiver_ip, &server_address.sin_addr);
+
+    // Connect to the receiver
+    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) == -1) {
+        perror("Error connecting to receiver");
+        close(sock);
+        return -1;
+    }
+
+    char decision = 'n';
+    int continue_sending = 1;
     while (1) {
-        // Create a TCP socket
-        int sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock == -1) {
-            perror("Error creating socket");
-            return -1;
-        }
 
-        if (strcmp(congestion_algorithm, "reno") == 0) {
-            setsockopt(sock, IPPROTO_TCP, congestion_algorithm, "reno", strlen("reno"));
-        } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-            setsockopt(sock, IPPROTO_TCP, congestion_algorithm, "cubic", strlen("cubic"));
-        } else {
-            printf("Invalid congestion control algorithm specified.\n");
-            close(sock);
-            return -1;
-        }
-
-        // Set up connection parameters
-        struct sockaddr_in server_address;
-        memset(&server_address, 0, sizeof(server_address));
-        server_address.sin_family = AF_INET;
-        server_address.sin_port = htons(receiver_port);
-        inet_pton(AF_INET, receiver_ip, &server_address.sin_addr);
-
-        // Connect to the receiver
-        if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) == -1) {
-            perror("Error connecting to receiver");
-            close(sock);
-            return -1;
-        }    
-        
-        if(decision == 'y')
+        if (decision == 'y')
             printf("Continuing . . .\n");
-
 
         printf("Sending %ld bytes of data . . .\n", BUFFER_SIZE);
         // Send the file
@@ -105,13 +94,15 @@ int main(int argc, char *argv[]) {
         }
 
         char *buffer = (char *)malloc(BUFFER_SIZE);
-        if(buffer == NULL){
+        if (buffer == NULL) {
             printf("Failed to create buffer \n");
-            free(buffer);
+            fclose(file);
+            close(sock);
             return -1;
         }
+
         size_t bytes_read;
-        while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
             ssize_t bytes_sent = send(sock, buffer, bytes_read, 0);
             if (bytes_sent == -1) {
                 perror("Error sending file");
@@ -133,23 +124,29 @@ int main(int argc, char *argv[]) {
         printf("Do you want to send more data? (y/n): ");
         scanf(" %c", &decision);
 
-        if (decision != 'y' && decision != 'n') {
+        while (decision != 'y' && decision != 'n') {
             printf("Invalid answer, do you want to send more data? (y/n) ");
             scanf(" %c", &decision);
         }
 
+        // Send the decision to the receiver
+        ssize_t bytes_sent = send(sock, &decision, sizeof(decision), 0);
+        if (bytes_sent == -1) {
+            perror("Error sending decision");
+            close(sock);
+            return -1;
+        }
+
         if (decision == 'n')
             break;
-        if(decision == 'y')
+        else if (decision == 'y')
             printf("Waiting for the server to be ready . . .\n");
 
-        // Close the TCP connection
-        close(sock);
     }
 
-
+    // Close the TCP connection
+    close(sock);
     printf("Exited program.\n");
-    
 
     return 0;
 }
