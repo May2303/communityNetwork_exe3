@@ -9,7 +9,7 @@ TCP_Sender: tcp-sender.c
 	gcc -o TCP_Sender tcp-sender.c
 
 clean:
-	rm -f *.o tcp-receiver tcp-sender
+	rm -f *.o TCP_Receiver TCP_Sender
 
 runs:
 	./TCP_Receiver
