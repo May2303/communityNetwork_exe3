@@ -43,7 +43,7 @@ void print_statistics(clock_t start_time, clock_t end_time, size_t file_size_byt
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 6 || strcmp(argv[1], "-ip") != 0 || strcmp(argv[3], "-port") != 0 || strcmp(argv[4], "-algo") != 0) {
+    if (argc != 7 || strcmp(argv[1], "-ip") != 0 || strcmp(argv[3], "-port") != 0 || strcmp(argv[5], "-algo") != 0) {
         printf("Usage: %s -ip <receiver_ip> -port <receiver_port> -algo <congestion_algorithm>\n", argv[0]);
         return -1;
     }
