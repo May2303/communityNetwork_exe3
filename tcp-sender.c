@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     const char *file_name = "random_file.bin";
 
     // Generate random file of at least 2MB size
-    size_t file_size_bytes = FILE_SIZE_MB * 1024 * 1024;
+    size_t file_size_bytes = FILE_SIZE_MB * 1024 * 1024 * 8; //Megabyte is 8m
     generate_random_file(file_name, file_size_bytes);
 
     // Create a TCP socket
