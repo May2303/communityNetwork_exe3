@@ -19,13 +19,13 @@ void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t f
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 5 || strcmp(argv[1], "-p") != 0 || strcmp(argv[3], "-algo") != 0) {
+    if (argc != 6 || strcmp(argv[1], "-p") != 0 || strcmp(argv[3], "-algo") != 0) {
         printf("Usage: %s -p <port> -algo <congestion_algorithm>\n", argv[0]);
         return -1;
     }
 
     int port = atoi(argv[2]);
-    const char *congestion_algorithm = argv[4];
+    const char *congestion_algorithm = argv[5];
     int enable_reuse = 1;
     int listening_socket = -1;
 
@@ -42,14 +42,10 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // Set TCP congestion control algorithm
-    int algorithm;
     if (strcmp(congestion_algorithm, "reno") == 0) {
-        algorithm = TCP_CONGESTION;
-        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
+        setsockopt(listening_socket, IPPROTO_TCP, TCP_CONGESTION, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        algorithm = TCP_CONGESTION;
-        setsockopt(listening_socket, IPPROTO_TCP, algorithm, "cubic", strlen("cubic"));
+        setsockopt(listening_socket, IPPROTO_TCP, TCP_CONGESTION, "cubic", strlen("cubic"));
     } else {
         printf("Invalid congestion control algorithm specified.\n");
         close(listening_socket);
@@ -99,7 +95,7 @@ int main(int argc, char *argv[]) {
         time_t start_time, end_time;
         time(&start_time); // Start time measurement
 
-        FILE *received_file = fopen("received_file.bin", "rb");
+        FILE *received_file = fopen("received_file.bin", "wb");
         if (received_file == NULL) {
             perror("Error opening file for writing");
             close(client_socket);

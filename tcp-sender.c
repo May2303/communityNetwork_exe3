@@ -35,9 +35,16 @@ void generate_random_file(const char *filename, size_t size) {
     fclose(file);
 }
 
+void print_statistics(clock_t start_time, clock_t end_time, size_t file_size_bytes) {
+    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+    double bandwidth = file_size_bytes / elapsed_time;
+    printf("Time taken: %.2f seconds\n", elapsed_time);
+    printf("Average bandwidth: %.2f bytes/second\n", bandwidth);
+}
+
 int main(int argc, char *argv[]) {
-    if (argc != 7 || strcmp(argv[1], "-ip") != 0 || strcmp(argv[3], "-p") != 0 || strcmp(argv[5], "-algo") != 0) {
-        printf("Usage: %s -ip <receiver_ip> -p <receiver_port> -algo <congestion_algorithm>\n", argv[0]);
+    if (argc != 6 || strcmp(argv[1], "-ip") != 0 || strcmp(argv[3], "-port") != 0 || strcmp(argv[4], "-algo") != 0) {
+        printf("Usage: %s -ip <receiver_ip> -port <receiver_port> -algo <congestion_algorithm>\n", argv[0]);
         return -1;
     }
 
@@ -57,14 +64,10 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // Set TCP congestion control algorithm
-    int algorithm;
     if (strcmp(congestion_algorithm, "reno") == 0) {
-        algorithm = TCP_CONGESTION;
-        setsockopt(sock, IPPROTO_TCP, algorithm, "reno", strlen("reno"));
+        setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "reno", strlen("reno"));
     } else if (strcmp(congestion_algorithm, "cubic") == 0) {
-        algorithm = TCP_CONGESTION;
-        setsockopt(sock, IPPROTO_TCP, algorithm, "cubic", strlen("cubic"));
+        setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "cubic", strlen("cubic"));
     } else {
         printf("Invalid congestion control algorithm specified.\n");
         close(sock);
@@ -85,40 +88,34 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    while (1) {
-        // Send the file
-        FILE *file = fopen(file_name, "rb");
-        if (file == NULL) {
-            perror("Error opening file for reading");
+    // Send the file
+    clock_t start_time = clock();
+    FILE *file = fopen(file_name, "rb");
+    if (file == NULL) {
+        perror("Error opening file for reading");
+        close(sock);
+        return -1;
+    }
+
+    char buffer[BUFFER_SIZE];
+    size_t bytes_read;
+    while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        ssize_t bytes_sent = send(sock, buffer, bytes_read, 0);
+        if (bytes_sent == -1) {
+            perror("Error sending file");
+            fclose(file);
             close(sock);
             return -1;
         }
-
-        char buffer[BUFFER_SIZE];
-        size_t bytes_read;
-        while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-            ssize_t bytes_sent = send(sock, buffer, bytes_read, 0);
-            if (bytes_sent == -1) {
-                perror("Error sending file");
-                fclose(file);
-                close(sock);
-                return -1;
-            }
-        }
-
-        // Close the current file
-        fclose(file);
-
-        // User decision: Send the file again or exit
-        printf("Do you want to send another file? (y/n): ");
-        char decision;
-        scanf(" %c", &decision);
-
-        if (decision != 'y' && decision != 'Y') {
-            // If the user enters something other than 'y' or 'Y', exit the loop
-            break;
-        }
     }
+
+    fclose(file);
+    clock_t end_time = clock();
+
+    printf("Successfully sent %ld bytes of data!\n", file_size_bytes);
+
+    // Calculate and print statistics
+    print_statistics(start_time, end_time, file_size_bytes);
 
     // Close the TCP connection
     close(sock);
