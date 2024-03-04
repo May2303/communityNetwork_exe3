@@ -1,24 +1,24 @@
-# Makefile for TCP project
+# Makefile for UDP project
 
-all: TCP_Receiver TCP_Sender
+all: rdup_receiver rdup_sender
 
-TCP_Receiver: tcp-receiver.c
-	gcc -o TCP_Receiver tcp-receiver.c
+rdup_receiver: rdup_receiver.c
+	gcc -o rdup_receiver rdup_receiver.c
 
-TCP_Sender: tcp-sender.c
-	gcc -o TCP_Sender tcp-sender.c
+rdup_sender: rdup_sender.c
+	gcc -o rdup_sender rdup_sender.c
 
 clean:
-	rm -f *.o TCP_Receiver TCP_Sender
+	rm -f *.o rdup_receiver rdup_sender
 
 runs:
-	./TCP_Receiver
+	./rdup_receiver
 
 runc:
-	./TCP_Sender
+	./rdup_sender
 
 runs-strace:
-	strace -f ./TCP_Receiver
+	strace -f ./rdup_receiver
 
 runc-strace:
-	strace -f ./TCP_Sender
+	strace -f ./rudp_client
