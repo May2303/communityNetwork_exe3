@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
         int i=0;
         while ((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) > 0) {
             size_t bytes_written = fwrite(buffer, 1, bytes_received, file);
-            printf("Iteration: %d",i++)
+            printf("Iteration: %d",i++);
             printf("Received so far: %zu\n", bytes_received);
             if (bytes_written != bytes_received) {
                 perror("Error writing to file");
