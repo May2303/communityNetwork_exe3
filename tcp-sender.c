@@ -112,7 +112,6 @@ int main(int argc, char *argv[]) {
 
         printf("Sending %ld bytes of data . . .\n", BUFFER_SIZE);
         // Send the file
-        clock_t start_time = clock();
         FILE *file = fopen(file_name, "rb");
         if (file == NULL) {
             perror("Error opening file for reading");
