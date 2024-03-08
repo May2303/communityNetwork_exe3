@@ -1,3 +1,4 @@
+// receiver.c
 #include <netinet/tcp.h> 
 #include <stdio.h>
 #include <unistd.h>
@@ -10,7 +11,7 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2 * 1024 * 1024  // 2 Megabytes buffer size
+#define BUFFER_SIZE 2 * 1000 * 1000  // 2 Megabytes buffer size
 
 void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t total_bytes_received) {
     double elapsed_time = difftime(end_time, start_time);
@@ -74,18 +75,47 @@ int main(int argc, char *argv[]) {
 
     struct sockaddr_in client_address;
     socklen_t client_address_len = sizeof(client_address);
+    int client_socket;
+
+    // Accept the connection from the sender
+    memset(&client_address, 0, sizeof(client_address));
+    client_address_len = sizeof(client_address);
+
+    client_socket = accept(listening_socket, (struct sockaddr *)&client_address, &client_address_len);
+    if (client_socket == -1) {
+        perror("accept() failed");
+        close(listening_socket);
+        return -1;
+    }
+
+    // Send acknowledgment back to sender
+    char ack = 'A';
+    if (send(client_socket, &ack, sizeof(ack), 0) == -1) {
+        perror("Error sending acknowledgment to sender");
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+    }
+
+    // Wait for acknowledgment from sender
+    if (recv(client_socket, &ack, sizeof(ack), 0) <= 0) {
+        perror("Error receiving acknowledgment from sender");
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+    }
+
+    // Check if the acknowledgment is valid
+    if (ack != 'H') {
+        printf("Invalid acknowledgment received from receiver\n");
+        close(sock);
+        return -1;
+    }
+
+    printf("Handshake successful\n");
+    printf("Connected to %s:%d\n", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
 
     while (1) {
-        memset(&client_address, 0, sizeof(client_address));
-        client_address_len = sizeof(client_address);
-        int client_socket = accept(listening_socket, (struct sockaddr *)&client_address, &client_address_len);
-        if (client_socket == -1) {
-            perror("accept() failed");
-            close(listening_socket);
-            return -1;
-        }
-
-        //printf("Received connection from %s\n", inet_ntoa(client_address.sin_addr));
 
         time_t start_time, end_time;
         time(&start_time);
@@ -112,17 +142,22 @@ int main(int argc, char *argv[]) {
             close(client_socket);
             close(listening_socket);
             return -1;
+        } else if (bytes_received == 0) {
+            printf("Sender closed the connection\n");
+            free(buffer);
+            close(client_socket);
+            break; 
         }
 
         time(&end_time);
+        calculate_and_print_statistics(start_time, end_time, total_bytes_received); 
 
-        //printf("Received %zu bytes of data from %s\n", total_bytes_received, inet_ntoa(client_address.sin_addr));
-
-        printf("Waiting for client response...\n");
+        printf("Waiting for client's decision...\n");
 
         char decision;
         if (recv(client_socket, &decision, sizeof(decision), 0) <= 0) {
             perror("Error receiving client response");
+            free(buffer);
             close(client_socket);
             close(listening_socket);
             return -1;
@@ -130,20 +165,25 @@ int main(int argc, char *argv[]) {
 
         if (decision == 'y') {
             printf("Client responded with 'y', sending sync byte...\n");
-            send(client_socket, "S", 1, 0);
+            if (send(client_socket, "S", 1, 0) == -1) {
+                perror("Error sending sync byte");
+                free(buffer);
+                close(client_socket);
+                close(listening_socket);
+                return -1;
+            }
         } else if (decision == 'n') {
             printf("Client responded with 'n'. Exiting program...\n");
+            free(buffer);
             close(client_socket);
             close(listening_socket);
-            free(buffer);
             break;
         } else {
             printf("Invalid response received. Continuing loop...\n");
         }
 
-        calculate_and_print_statistics(start_time, end_time, total_bytes_received);
-
         free(buffer);
+        close(client_socket);
     }
 
     close(listening_socket);

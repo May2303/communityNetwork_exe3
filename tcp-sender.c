@@ -9,7 +9,7 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
+#define BUFFER_SIZE 2 * 1000 * 1000 // 2 Megabytes buffer size
 
 void generate_random_file(const char *filename, size_t size) {
     FILE *file = fopen(filename, "wb");
@@ -42,11 +42,9 @@ void print_statistics(clock_t start_time, clock_t end_time, size_t file_size_byt
 
 int main(int argc, char *argv[]) {
     if (argc != 7 || strcmp(argv[1], "-ip") != 0 || strcmp(argv[3], "-p") != 0 || strcmp(argv[5], "-algo") != 0) {
-        printf("Usage: %s -ip <ip> -port <receiver_port> -algo <congestion_algorithm>\n", argv[0]);
+        printf("Usage: %s -ip <ip> -p <receiver_port> -algo <congestion_algorithm>\n", argv[0]);
         return -1;
     }
-
-    clock_t end_time = clock();
 
     const char *receiver_ip = argv[2];
     int receiver_port = atoi(argv[4]);
@@ -78,6 +76,33 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    // Handshake with the receiver
+    char handshake = 'H';
+    ssize_t bytes_sent = send(sock, &handshake, sizeof(handshake), 0);
+    if (bytes_sent == -1) {
+        perror("Error sending handshake");
+        close(sock);
+        return -1;
+    }
+
+    char ack;
+    ssize_t bytes_received = recv(sock, &ack, sizeof(ack), 0);
+    if (bytes_received <= 0) {
+        perror("Error receiving acknowledgment from receiver");
+        close(sock);
+        return -1;
+    }
+
+    // Check if the acknowledgment is valid
+    if (ack != 'A') {
+        printf("Invalid acknowledgment received from receiver\n");
+        close(sock);
+        return -1;
+    }
+
+    printf("Handshake successful\n");
+    printf("Connected to %s:%d\n", receiver_ip, receiver_port);
+
     char decision = 'n';
     int continue_sending = 1;
     while (1) {
@@ -103,6 +128,7 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
+        clock_t start_time = clock();
         size_t bytes_read;
         while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
             ssize_t bytes_sent = send(sock, buffer, bytes_read, 0);
@@ -114,8 +140,9 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        fclose(file);
+        clock_t end_time = clock(); 
 
+        fclose(file);
         printf("Successfully sent %ld bytes of data!\n", file_size_bytes);
 
         // Calculate and print statistics
@@ -141,8 +168,25 @@ int main(int argc, char *argv[]) {
         if (decision == 'n')
             break;
         else if (decision == 'y'){
-            printf("Waiting for the server to be ready . . .\n");
-            end_time = clock();
+           printf("Waiting for the server to be ready . . .\n");
+
+            // Receive the sync byte from the receiver
+            char sync_byte;
+            ssize_t bytes_received = recv(sock, &sync_byte, sizeof(sync_byte), 0);
+            if (bytes_received <= 0) {
+                perror("Error receiving sync byte from receiver");
+                close(sock);
+                return -1;
+            }
+
+            // Check if the received byte is the sync byte
+            if (sync_byte == 'S') {
+                printf("Server accepted your decision.\n");
+            } else {
+                printf("Error: Unexpected response from server.\n");
+                close(sock);
+                return -1;
+            }
         }
 
     }
