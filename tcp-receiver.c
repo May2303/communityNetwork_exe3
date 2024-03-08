@@ -112,6 +112,17 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+
+    char *client_ip = inet_ntoa(client_address.sin_addr);
+    if (client_ip == NULL) {
+        perror("Error converting client IP address");
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+        }
+        
+    int client_port = ntohs(client_address.sin_port);
+
     printf("Handshake successful\n");
     printf("Connected to %s:%d\n", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
 
