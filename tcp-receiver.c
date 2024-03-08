@@ -11,7 +11,8 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2 * 1000   // 2 Megabytes buffer size
+#define FILE_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
+#define BUFFER_SIZE 2 * 1000  
 
 void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t total_bytes_received) {
     double elapsed_time = difftime(end_time, start_time);
@@ -144,7 +145,14 @@ int main(int argc, char *argv[]) {
         }
         
         int i=0;
-        while ((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) > 0) {
+        while (total_bytes_received < FILE_SIZE) {
+            if((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) <= 0){
+                perror("Error receiving file's content from client");
+                free(buffer);
+                close(client_socket);
+                close(listening_socket);
+                return -1;
+            }
             size_t bytes_written = fwrite(buffer, 1, bytes_received, file);
             printf("Iteration: %d",i++);
             printf("Received so far: %zu\n", bytes_received);
