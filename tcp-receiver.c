@@ -132,6 +132,8 @@ int main(int argc, char *argv[]) {
         size_t total_bytes_received = 0;
         ssize_t bytes_received;
 
+
+        printf("Receiving file from client . . .\n");
         // Receive the file from the sender
         FILE *file = fopen("received_file.bin", "wb");
         if (file == NULL) {
@@ -156,9 +158,9 @@ int main(int argc, char *argv[]) {
         }
 
         fclose(file);
-
-
         time(&end_time);
+
+        printf("Finished receiving file from client.\n");
         calculate_and_print_statistics(start_time, end_time, total_bytes_received); 
 
         printf("Waiting for client's decision...\n");
