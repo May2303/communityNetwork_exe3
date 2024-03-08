@@ -11,7 +11,7 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2 * 1000 * 1000  // 2 Megabytes buffer size
+#define BUFFER_SIZE 2 * 1000   // 2 Megabytes buffer size
 
 void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t total_bytes_received) {
     double elapsed_time = difftime(end_time, start_time);

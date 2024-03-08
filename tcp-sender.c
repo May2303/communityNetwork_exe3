@@ -10,7 +10,8 @@
 #include <signal.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2 * 1000 * 1000 // 2 Megabytes buffer size
+#define FILE_SIZE 2 * 1000 * 1000
+#define BUFFER_SIZE  2 * 1000 // 2 Megabytes buffer size
 
 void generate_random_file(const char *filename, size_t size) {
     FILE *file = fopen(filename, "wb");
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
     const char *file_name = "random_file.bin";
 
     // Generate random file of at least 2MB size
-    size_t file_size_bytes = BUFFER_SIZE;
+    size_t file_size_bytes = FILE_SIZE;
     generate_random_file(file_name, file_size_bytes);
 
     // Create a TCP socket
@@ -111,7 +112,7 @@ int main(int argc, char *argv[]) {
         if (decision == 'y')
             printf("Continuing . . .\n");
 
-        printf("Sending %ld bytes of data . . .\n", BUFFER_SIZE);
+        printf("Sending %ld bytes of data . . .\n", FILE_SIZE);
         // Send the file
         FILE *file = fopen(file_name, "rb");
         if (file == NULL) {
