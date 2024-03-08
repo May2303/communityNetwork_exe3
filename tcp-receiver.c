@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
-        printf("Received connection from %s\n", inet_ntoa(client_address.sin_addr));
+        //printf("Received connection from %s\n", inet_ntoa(client_address.sin_addr));
 
         time_t start_time, end_time;
         time(&start_time);
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 
         time(&end_time);
 
-        printf("Received %zu bytes of data from %s\n", total_bytes_received, inet_ntoa(client_address.sin_addr));
+        //printf("Received %zu bytes of data from %s\n", total_bytes_received, inet_ntoa(client_address.sin_addr));
 
         printf("Waiting for client response...\n");
 
