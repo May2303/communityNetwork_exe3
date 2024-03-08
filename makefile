@@ -12,10 +12,10 @@ clean:
 	rm -f *.o TCP_Receiver TCP_Sender
 
 runs:
-	./TCP_Receiver
+	./TCP_Receiver -p 12345 -algo cubic
 
 runc:
-	./TCP_Sender
+	./TCP_Sender -ip localhost -p 12345 -algo cubic
 
 runs-strace:
 	strace -f ./TCP_Receiver

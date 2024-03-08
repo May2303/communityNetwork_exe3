@@ -114,22 +114,6 @@ int main(int argc, char *argv[]) {
 
     printf("Handshake successful\n");
 
-    char* client_ip = inet_ntoa(client_address.sin_addr);
-    if (client_ip == NULL) {
-        perror("Error converting client address to string");
-        close(client_socket);
-        close(listening_socket);
-        return -1;
-    }
-
-    int client_port = ntohs(client_address.sin_port);
-    if (client_port == -1) {
-        perror("Error converting client port to host byte order");
-        close(client_socket);
-        close(listening_socket);
-        return -1;
-    }
-
     //printf("Connected to %s:%d\n", client_ip, client_port);
 
     while (1) {
