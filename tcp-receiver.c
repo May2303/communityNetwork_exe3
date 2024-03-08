@@ -144,6 +144,7 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
+        printf("Entering reading file while\n");
         while ((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) > 0) {
             size_t bytes_written = fwrite(buffer, 1, bytes_received, file);
             if (bytes_written != bytes_received) {
