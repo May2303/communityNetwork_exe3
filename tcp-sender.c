@@ -106,7 +106,13 @@ int main(int argc, char *argv[]) {
     printf("Connected to %s:%d\n", receiver_ip, receiver_port);
 
     char decision = 'n';
-    int continue_sending = 1;
+    char *buffer = (char *)malloc(BUFFER_SIZE);
+    if (buffer == NULL) {
+            printf("Failed to create buffer \n");
+            fclose(file);
+            close(sock);
+            return -1;
+    }
     while (1) {
 
         if (decision == 'y')
@@ -117,14 +123,6 @@ int main(int argc, char *argv[]) {
         FILE *file = fopen(file_name, "rb");
         if (file == NULL) {
             perror("Error opening file for reading");
-            close(sock);
-            return -1;
-        }
-
-        char *buffer = (char *)malloc(BUFFER_SIZE);
-        if (buffer == NULL) {
-            printf("Failed to create buffer \n");
-            fclose(file);
             close(sock);
             return -1;
         }
@@ -193,6 +191,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Close the TCP connection
+    free(buffer);
     close(sock);
     printf("Exited program.\n");
 

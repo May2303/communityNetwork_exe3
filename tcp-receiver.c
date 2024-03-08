@@ -116,18 +116,16 @@ int main(int argc, char *argv[]) {
     printf("Handshake successful\n");
 
     //printf("Connected to %s:%d\n", client_ip, client_port);
+    char *buffer = (char *)malloc(BUFFER_SIZE);
 
-    while (1) {
-
-        time_t start_time, end_time;
-
-        char *buffer = (char *)malloc(BUFFER_SIZE);
-        if (buffer == NULL) {
+    if (buffer == NULL) {
             printf("Error allocating memory for buffer\n");
             close(client_socket);
             close(listening_socket);
             return -1;
-        }
+    }
+    time_t start_time, end_time;
+    while (1) {
 
         size_t total_bytes_received = 0;
         size_t bytes_received;
@@ -144,7 +142,6 @@ int main(int argc, char *argv[]) {
             return -1;
         }
         
-        int i=0;
         while (total_bytes_received < FILE_SIZE) {
             if((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) <= 0){
                 perror("Error receiving file's content from client");
@@ -154,8 +151,6 @@ int main(int argc, char *argv[]) {
                 return -1;
             }
             size_t bytes_written = fwrite(buffer, 1, bytes_received, file);
-            printf("Iteration: %d",i++);
-            printf("Received so far: %zu\n", bytes_received);
             if (bytes_written != bytes_received) {
                 perror("Error writing to file");
                 free(buffer);
@@ -207,6 +202,7 @@ int main(int argc, char *argv[]) {
         close(client_socket);
     }
 
+    free(buffer);
     close(listening_socket);
     return 0;
 }
