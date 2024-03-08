@@ -1,4 +1,4 @@
-// receiver.c
+// Receiver file
 #include <netinet/tcp.h> 
 #include <stdio.h>
 #include <unistd.h>
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    printf("Connected to %s:%d\n", client_ip, client_port);
+    //printf("Connected to %s:%d\n", client_ip, client_port);
 
     while (1) {
 
@@ -149,22 +149,30 @@ int main(int argc, char *argv[]) {
         ssize_t bytes_received;
 
         // Receive the file from the sender
-        while ((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) > 0) {
-            total_bytes_received += bytes_received;
-        }
-
-        if (bytes_received < 0) {
-            perror("Error receiving file");
+        FILE *file = fopen("received_file.bin", "wb");
+        if (file == NULL) {
+            perror("Error opening file for writing");
             free(buffer);
             close(client_socket);
             close(listening_socket);
             return -1;
-        } else if (bytes_received == 0) {
-            printf("Sender closed the connection\n");
-            free(buffer);
-            close(client_socket);
-            break; 
         }
+
+        while ((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) > 0) {
+            size_t bytes_written = fwrite(buffer, 1, bytes_received, file);
+            if (bytes_written != bytes_received) {
+                perror("Error writing to file");
+                free(buffer);
+                fclose(file);
+                close(client_socket);
+                close(listening_socket);
+                return -1;
+            }
+            total_bytes_received += bytes_received;
+        }
+
+        fclose(file);
+
 
         time(&end_time);
         calculate_and_print_statistics(start_time, end_time, total_bytes_received); 
