@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     // Check if the acknowledgment is valid
     if (ack != 'H') {
         printf("Invalid acknowledgment received from receiver\n");
-        close(sock);
+        close(client_socket);
         return -1;
     }
 
