@@ -119,7 +119,6 @@ int main(int argc, char *argv[]) {
     while (1) {
 
         time_t start_time, end_time;
-        time(&start_time);
 
         char *buffer = (char *)malloc(BUFFER_SIZE);
         if (buffer == NULL) {
@@ -160,8 +159,8 @@ int main(int argc, char *argv[]) {
             total_bytes_received += bytes_received;
         }
 
+        printf("Received bytes: %zu\n", total_bytes_received);
         fclose(file);
-        time(&end_time);
 
         printf("Finished receiving file from client.\n");
         calculate_and_print_statistics(start_time, end_time, total_bytes_received); 
