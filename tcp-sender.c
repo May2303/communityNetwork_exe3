@@ -109,7 +109,6 @@ int main(int argc, char *argv[]) {
     char *buffer = (char *)malloc(BUFFER_SIZE);
     if (buffer == NULL) {
             printf("Failed to create buffer \n");
-            fclose(file);
             close(sock);
             return -1;
     }
