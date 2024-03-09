@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
+#include <arpa/inet.h>
+
 
 #define FILE_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
 #define BUFFER_SIZE  2 * 1024 // Size of packets
@@ -37,7 +39,7 @@ void generate_random_file(const char *filename, size_t size) {
     fclose(file);
 }
 
-void print_statistics(clock_t start_time, clock_t end_time, size_t file_size_bytes) {
+void print_statistics(clock_t start_time, clock_t end_time) {
     double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     printf("Time taken: %.2f ms\n", (elapsed_time * 1000));
 }
@@ -122,7 +124,7 @@ int main(int argc, char *argv[]) {
         if (decision == 'y')
             printf("Continuing...\n");
 
-        printf("Sending %ld bytes of data...\n", FILE_SIZE);
+        printf("Sending %zu bytes of data...\n", FILE_SIZE);
         // Send the file
         FILE *file = fopen(file_name, "rb");
         if (file == NULL) {
@@ -155,7 +157,7 @@ int main(int argc, char *argv[]) {
         printf("Successfully sent %ld bytes of data!\n", total_bytes_received);
 
         // Calculate and print statistics
-        print_statistics(start_time, end_time, total_bytes_received);
+        print_statistics(start_time, end_time);
 
         // Ask user if they want to send more data
         printf("Do you want to send more data? (y/n): ");

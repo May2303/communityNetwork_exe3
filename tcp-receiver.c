@@ -10,12 +10,13 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
+#include <arpa/inet.h>
 
 #define FILE_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
 #define BUFFER_SIZE 2 * 1024  // Size of each packet
 #define STATISTICS_SIZE 100 // Maximum iterations (resend the file)
 
-void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int iteration) {
+void print_statistics(double *timeTaken, double *transferSpeed, const char *algo, int iteration) {
     double total_Time =0;
     double total_Speed=0;
     for(int i=0; i<iteration; i++){
