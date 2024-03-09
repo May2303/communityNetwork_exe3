@@ -15,7 +15,7 @@
 #define BUFFER_SIZE 2 * 1024  // Size of each packet
 #define STATISTICS_SIZE 100 // Maximum iterations (resend the file)
 
-void print_statistics(double *timeTaken, double *transferSpeed, char *algo, iteration) {
+void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int iteration) {
     double total_Time =0;
     double total_Speed=0;
     for(int i=0; i<=iteration; i++){
