@@ -23,13 +23,13 @@ void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int 
         total_Speed+=transferSpeed[i];
     }
 
-    double average_Time = total_Time/(iteration+1);
-    double average_Speed = total_Speed/(iteration+1);
+    double average_Time = total_Time/(iteration);
+    double average_Speed = total_Speed/(iteration);
     
     printf("- - - - - - - - - - - - - - - - - -\n");
     printf("\n-        * Statistics *           -\n");
     printf("- Algorithm: %s\n", algo);
-    printf("- The file was sent %d times\n", (iteration+1));
+    printf("- The file was sent %d times\n", (iteration));
     printf("- Average time taken to receive the file: %.2f ms.\n", average_Time);
     printf("- Average throughput: %.2f Mbps\n", average_Speed );
     printf("- Total time: %.2f ms\n", total_Time );
@@ -37,7 +37,7 @@ void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int 
 
     iteration =0;
     for(int j=0; j<=iteration; j++){
-        printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", iteration, timeTaken[iteration], transferSpeed[iteration]);
+        printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", j, timeTaken[j], transferSpeed[j]);
     }
 
     printf("- - - - - - - - - - - - - - - - - -\n");
