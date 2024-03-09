@@ -19,12 +19,17 @@ runs:
 runc:
 	./TCP_Sender
 
-tests:
+sercubic:
 	./TCP_Receiver -p 12345 -algo cubic
 
-testc:
+serreno:
+	./TCP_Receiver -p 12345 -algo reno
+
+clicubic:
 	./TCP_Sender -ip localhost -p 12345 -algo cubic
 
+clireno:
+	./TCP_Sender -ip localhost -p 12345 -algo reno
 runs-strace:
 	strace -f ./TCP_Receiver
 
