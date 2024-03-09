@@ -207,7 +207,9 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-
+    // Initialize all elements of transferSpeed,timeTaken to 0
+    memset(transferSpeed, 0, BUFFER_SIZE * sizeof(double));
+    memset(timeTaken, 0, BUFFER_SIZE * sizeof(double));
     time_t start_time, end_time;
     int iteration=0; //Iteration counter
 
