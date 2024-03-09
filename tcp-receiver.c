@@ -20,9 +20,6 @@ void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int 
     double total_Speed=0;
     for(int i=0; i<iteration; i++){
         total_Time+=timeTaken[i];
-        printf("Current time in 2f: %.2f\n",timeTaken[i]);
-        printf("Current time in d: %d\n",timeTaken[i]);
-        printf("Total time: %.2f\n" , total_Time);
         total_Speed+=transferSpeed[i];
     }
 
@@ -297,12 +294,12 @@ int main(int argc, char *argv[]) {
             printf("Client responded with 'n'.\n");
             printf("Closing connection...\n");
             // Close the TCP connection
-            free(timeTaken);
-            free(transferSpeed);
             free(buffer);
             close(client_socket);
             close(listening_socket);
             print_statistics(timeTaken,transferSpeed,congestion_algorithm, iteration);
+            free(timeTaken);
+            free(transferSpeed);
             return 0;
         } else {
             printf("Unexpected response received. Closing connection...\n");
