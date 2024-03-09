@@ -259,7 +259,8 @@ int main(int argc, char *argv[]) {
         printf("Received %zu bytes of data from %s:%d.\n", total_bytes_received, client_ip, port);
         fclose(file);
 
-        updateStatistics(timeTaken, transferSpeed , start_time, end_time, total_bytes_received, iteration++);
+        updateStatistics(timeTaken, transferSpeed , start_time, end_time, total_bytes_received, iteration);
+        iteration++;
 
         printf("Waiting for client's decision...\n");
 
