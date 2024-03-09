@@ -35,7 +35,6 @@ void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int 
     printf("- Total time: %.2f ms\n", total_Time );
     printf("\nIndividual samples:\n");
 
-    iteration =0;
     for(int j=0; j<=iteration; j++){
         printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", j, timeTaken[j], transferSpeed[j]);
     }
@@ -50,7 +49,7 @@ void updateStatistics(double *timeTaken, double *transferSpeed, time_t start_tim
     double throughput_mbps = (total_bytes_received) / (1024 * 1024 * elapsed_time); // Transfer speed in Mbps
 
     // Calculate time taken in milliseconds
-    double time_taken_ms = elapsed_time * 1000;
+    double time_taken_ms = (elapsed_time * 1000);
 
     // Insert values into the arrays
     timeTaken[iteration] = time_taken_ms; 
