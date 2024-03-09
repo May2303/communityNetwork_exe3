@@ -41,7 +41,7 @@ void print_statistics(double *timeTaken, double *transferSpeed, const char *algo
     }
 
     printf("- - - - - - - - - - - - - - - - - -\n");
-    printf("Receiver end.");
+    printf("Receiver end.\n");
 
 }
 
