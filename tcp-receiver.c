@@ -142,6 +142,8 @@ int main(int argc, char *argv[]) {
             return -1;
         }
         
+        start_time = clock();
+
         while (total_bytes_received < FILE_SIZE) {
             if((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) <= 0){
                 perror("Error receiving file's content from client");
@@ -162,10 +164,11 @@ int main(int argc, char *argv[]) {
             total_bytes_received += bytes_received;
         }
 
+        end_time = clock();
+
         printf("Received bytes: %zu\n", total_bytes_received);
         fclose(file);
 
-        printf("Finished receiving file from client.\n");
         calculate_and_print_statistics(start_time, end_time, total_bytes_received); 
 
         printf("Waiting for client's decision...\n");
@@ -198,7 +201,6 @@ int main(int argc, char *argv[]) {
             printf("Invalid response received. Continuing loop...\n");
         }
 
-        free(buffer);
         close(client_socket);
     }
 
