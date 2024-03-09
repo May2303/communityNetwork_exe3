@@ -36,7 +36,7 @@ void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int 
     printf("\nIndividual samples:\n");
 
     for(int j=0; j<iteration; j++){
-        printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", j+1, timeTaken[j], transferSpeed[j]);
+        printf("- Run #%d Data: Time=%.2f ms; Speed=%.2f Mbps\n", j+1, timeTaken[j], transferSpeed[j]);
     }
 
     printf("- - - - - - - - - - - - - - - - - -\n");
@@ -126,32 +126,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // Send acknowledgment back to sender
-    char ack = 'A';
-    if (send(client_socket, &ack, sizeof(ack), 0) == -1) {
-        perror("Error sending acknowledgment to sender");
-        close(client_socket);
-        close(listening_socket);
-        return -1;
-    }
-
-    // Wait for acknowledgment from sender
-    if (recv(client_socket, &ack, sizeof(ack), 0) <= 0) {
-        perror("Error receiving acknowledgment from sender");
-        close(client_socket);
-        close(listening_socket);
-        return -1;
-    }
-
-    // Check if the acknowledgment is valid
-    if (ack != 'H') {
-        printf("Invalid acknowledgment received from receiver\n");
-        close(client_socket);
-        return -1;
-    }
-
-    printf("Handshake successful - connection established.\n");
-
     // Retrieve the client's IP address using getpeername
     struct sockaddr_in peer_addr;
     socklen_t peer_addr_len = sizeof(peer_addr);
@@ -170,6 +144,38 @@ int main(int argc, char *argv[]) {
         close(listening_socket);
         return -1;
     }
+
+    // Send acknowledgment back to sender
+    char ack = 'A';
+    if (send(client_socket, &ack, sizeof(ack), 0) == -1) {
+        perror("Error sending acknowledgment to sender");
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+    }
+
+    // Wait for acknowledgment from sender
+    int receivedData = recv(client_socket, &ack, sizeof(ack), 0);
+    if (receivedData < 0) {
+        perror("Error receiving acknowledgment from sender");
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+    }else if(receivedData ==0){
+        printf("Client %s:%d disconnected.\n" , client_ip, port);
+        close(client_socket);
+        close(listening_socket);
+        return 0;
+    }
+
+    // Check if the acknowledgment is valid
+    if (ack != 'H') {
+        printf("Invalid acknowledgment received from receiver\n");
+        close(client_socket);
+        return -1;
+    }
+
+    printf("Handshake successful - connection established.\n");
 
     printf("Connected to %s:%d\n", client_ip, port);
 
@@ -238,7 +244,16 @@ int main(int argc, char *argv[]) {
                 close(client_socket);
                 close(listening_socket);
                 return -1;
-            } 
+            }else if(bytes_received ==0){
+                printf("Client %s:%d disconnected.\n" , client_ip, port);
+                free(timeTaken);
+                free(transferSpeed);
+                free(buffer);
+                close(client_socket);
+                close(listening_socket);
+                return 0;
+            }
+                 
             size_t bytes_written = fwrite(buffer, 1, bytes_received, file);
             if (bytes_written != bytes_received) {
                 perror("Error writing to file");
@@ -276,7 +291,12 @@ int main(int argc, char *argv[]) {
             return -1;
         }else if(decision_bytes == 0){
             printf("Client %s:%d disconnected.\n" , client_ip, port);
-            break;
+            free(timeTaken);
+            free(transferSpeed);
+            free(buffer);
+            close(client_socket);
+            close(listening_socket);
+            return 0;
         }
 
         if (decision == 'y') {

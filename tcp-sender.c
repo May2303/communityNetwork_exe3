@@ -89,10 +89,14 @@ int main(int argc, char *argv[]) {
 
     char ack;
     ssize_t bytes_received = recv(sock, &ack, sizeof(ack), 0);
-    if (bytes_received <= 0) {
+    if (bytes_received < 0) {
         perror("Error receiving acknowledgment from receiver");
         close(sock);
         return -1;
+    }else if(bytes_received ==0){
+        printf("Server %s:%d disconnected.\n" ,receiver_ip, receiver_port);
+        close(sock);
+        return 0;
     }
 
     // Check if the acknowledgment is valid
@@ -109,6 +113,7 @@ int main(int argc, char *argv[]) {
     char *buffer = (char *)malloc(BUFFER_SIZE);
     if (buffer == NULL) {
             printf("Failed to create buffer \n");
+            free(buffer);
             close(sock);
             return -1;
     }
@@ -122,6 +127,7 @@ int main(int argc, char *argv[]) {
         FILE *file = fopen(file_name, "rb");
         if (file == NULL) {
             perror("Error opening file for reading");
+            free(buffer);
             close(sock);
             return -1;
         }
@@ -135,6 +141,7 @@ int main(int argc, char *argv[]) {
             ssize_t bytes_sent = send(sock, buffer, bytes_received, 0);
             if (bytes_sent == -1) {
                 perror("Error sending file");
+                free(buffer);
                 fclose(file);
                 close(sock);
                 return -1;
@@ -163,6 +170,7 @@ int main(int argc, char *argv[]) {
         ssize_t bytes_sent = send(sock, &decision, sizeof(decision), 0);
         if (bytes_sent == -1) {
             perror("Error sending decision");
+            free(buffer);
             close(sock);
             return -1;
         }
@@ -175,10 +183,16 @@ int main(int argc, char *argv[]) {
             // Receive the sync byte from the receiver
             char sync_byte;
             ssize_t bytes_received = recv(sock, &sync_byte, sizeof(sync_byte), 0);
-            if (bytes_received <= 0) {
+            if (bytes_received < 0) {
                 perror("Error receiving sync byte from receiver");
+                free(buffer);
                 close(sock);
                 return -1;
+            }else if(bytes_received == 0){
+                printf("Server %s:%d disconnected.\n" ,receiver_ip, receiver_port);
+                free(buffer);
+                close(sock);
+                return 0;
             }
 
             // Check if the received byte is the sync byte
@@ -186,6 +200,7 @@ int main(int argc, char *argv[]) {
                 printf("Server accepted your decision.\n");
             } else {
                 printf("Error: Unexpected response from server.\n");
+                free(buffer);
                 close(sock);
                 return -1;
             }
