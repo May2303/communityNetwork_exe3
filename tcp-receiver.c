@@ -18,7 +18,7 @@
 void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int iteration) {
     double total_Time =0;
     double total_Speed=0;
-    for(int i=0; i<=iteration; i++){
+    for(int i=0; i<iteration; i++){
         total_Time+=timeTaken[i];
         total_Speed+=transferSpeed[i];
     }
@@ -35,7 +35,7 @@ void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int 
     printf("- Total time: %.2f ms\n", total_Time );
     printf("\nIndividual samples:\n");
 
-    for(int j=0; j<=iteration; j++){
+    for(int j=0; j<iteration; j++){
         printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", j, timeTaken[j], transferSpeed[j]);
     }
 
