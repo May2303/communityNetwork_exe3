@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
     const char *receiver_ip = argv[2];
     int receiver_port = atoi(argv[4]);
-    const char *congestion_  = argv[6];
+    const char *congestion_algorithm  = argv[6];
     const char *file_name = "random_file.bin";
 
     // Generate random file of at least 2MB size
