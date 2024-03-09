@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    printf("Handshake successful\n");
+    printf("Handshake successful - connection established.\n");
     printf("Connected to %s:%d\n", receiver_ip, receiver_port);
 
     char decision = 'n';

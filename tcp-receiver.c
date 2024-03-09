@@ -115,7 +115,27 @@ int main(int argc, char *argv[]) {
 
     printf("Handshake successful - connection established.\n");
 
-    //printf("Connected to %s:%d\n", client_ip, client_port);
+    // Retrieve the client's IP address using getpeername
+    struct sockaddr_in peer_addr;
+    socklen_t peer_addr_len = sizeof(peer_addr);
+    if (getpeername(client_socket, (struct sockaddr *)&peer_addr, &peer_addr_len) == -1) {
+        perror("getpeername() failed");
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+    }
+
+    // Convert the client's IP address from network format to presentation format
+    char client_ip[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &peer_addr.sin_addr, client_ip, INET_ADDRSTRLEN) == NULL) {
+        perror("inet_ntop() failed");
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+    }
+
+    printf("Connected to %s:%d\n", client_ip, port);
+
     char *buffer = (char *)malloc(BUFFER_SIZE);
 
     if (buffer == NULL) {
@@ -150,7 +170,7 @@ int main(int argc, char *argv[]) {
                 close(client_socket);
                 close(listening_socket);
                 return -1;
-            }
+            } 
             size_t bytes_written = fwrite(buffer, 1, bytes_received, file);
             if (bytes_written != bytes_received) {
                 perror("Error writing to file");
@@ -165,7 +185,7 @@ int main(int argc, char *argv[]) {
 
         end_time = clock();
 
-        printf("Received %zu bytes of data from (add later) \n.", total_bytes_received);
+        printf("Received %zu bytes of data from (add later). \n", total_bytes_received);
         fclose(file);
 
         printf("Waiting for client's decision...\n");
