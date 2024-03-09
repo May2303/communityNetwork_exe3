@@ -9,7 +9,7 @@ TCP_Sender: tcp-sender.c
 	gcc -o TCP_Sender tcp-sender.c
 
 clean:
-	rm -f *.o TCP_Receiver TCP_Sender
+	rm -f *.o TCP_Receiver TCP_Sender random_file.bin received_file.bin
 
 runs:
 	./TCP_Receiver -p 12345 -algo cubic
