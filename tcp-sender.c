@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, congestion_algorithm, strlen(algorithm)) < 0) {
+    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, congestion_algorithm, strlen(congestion_algorithm)) < 0) {
         perror("setsockopt() failed");
         close(sock);
         return -1;
