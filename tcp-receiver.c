@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
 
         end_time = clock();
 
-        printf("Received %zu bytes of data from (add later). \n", total_bytes_received);
+        printf("Received %zu bytes of data from %s:%d.\n", total_bytes_received, client_ip, port);
         fclose(file);
 
         printf("Waiting for client's decision...\n");
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
             close(listening_socket);
             return -1;
         }else if(decision_bytes == 0){
-            printf("Client (add later) disconnected.");
+            printf("Client %s:%d disconnected.\n" , client_ip, port);
             break;
         }
 
