@@ -71,18 +71,13 @@ int main(int argc, char *argv[]) {
     }
 
     // Set TCP congestion control algorithm
-    int algorithm;
-    if (strcmp(congestion_algorithm, "cubic") == 0) {
-        algorithm = TCP_CONGESTION_CUBIC;
-    } else if (strcmp(congestion_algorithm, "reno") == 0) {
-        algorithm = TCP_CONGESTION_RENO;
-    } else {
+    if (strcmp(congestion_algorithm, "cubic") != 0 && strcmp(congestion_algorithm, "reno") != 0 ) {
         printf("Invalid congestion algorithm: %s\n", congestion_algorithm);
         close(sock);
         return -1;
     }
 
-    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, algorithm, strlen(algorithm)) < 0) {
+    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, congestion_algorithm, strlen(algorithm)) < 0) {
         perror("setsockopt() failed");
         close(sock);
         return -1;
