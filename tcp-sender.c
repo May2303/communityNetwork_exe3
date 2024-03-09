@@ -115,9 +115,9 @@ int main(int argc, char *argv[]) {
     while (1) {
 
         if (decision == 'y')
-            printf("Continuing . . .\n");
+            printf("Continuing...\n");
 
-        printf("Sending %ld bytes of data . . .\n", FILE_SIZE);
+        printf("Sending %ld bytes of data...\n", FILE_SIZE);
         // Send the file
         FILE *file = fopen(file_name, "rb");
         if (file == NULL) {
@@ -127,24 +127,28 @@ int main(int argc, char *argv[]) {
         }
 
         clock_t start_time = clock();
-        size_t bytes_read;
-        while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
-            ssize_t bytes_sent = send(sock, buffer, bytes_read, 0);
+
+        size_t total_bytes_received = 0;
+        size_t bytes_received;
+
+        while ((bytes_received = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
+            ssize_t bytes_sent = send(sock, buffer, bytes_received, 0);
             if (bytes_sent == -1) {
                 perror("Error sending file");
                 fclose(file);
                 close(sock);
                 return -1;
             }
+            total_bytes_received += bytes_received;
         }
 
         clock_t end_time = clock(); 
 
         fclose(file);
-        printf("Successfully sent %ld bytes of data!\n", file_size_bytes);
+        printf("Successfully sent %ld bytes of data!\n", total_bytes_received);
 
         // Calculate and print statistics
-        print_statistics(start_time, end_time, file_size_bytes);
+        print_statistics(start_time, end_time, total_bytes_received);
 
         // Ask user if they want to send more data
         printf("Do you want to send more data? (y/n): ");
@@ -166,7 +170,7 @@ int main(int argc, char *argv[]) {
         if (decision == 'n')
             break;
         else if (decision == 'y'){
-            printf("Waiting for the server to be ready . . .\n");
+            printf("Waiting for the server to be ready...\n");
 
             // Receive the sync byte from the receiver
             char sync_byte;
@@ -189,10 +193,10 @@ int main(int argc, char *argv[]) {
 
     }
 
+    printf("Closing connection...\n");
     // Close the TCP connection
     free(buffer);
     close(sock);
-    printf("Exited program.\n");
 
     return 0;
 }

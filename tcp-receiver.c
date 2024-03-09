@@ -15,11 +15,11 @@
 #define BUFFER_SIZE 2 * 1000  
 
 void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t total_bytes_received) {
-    double elapsed_time = difftime(end_time, start_time);
+    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     double bandwidth = total_bytes_received / elapsed_time;
-    printf("Time taken: %.2f seconds\n", elapsed_time);
-    printf("Total bytes received: %zu\n", total_bytes_received);
-    printf("Average bandwidth: %.2f bytes/second\n", bandwidth);
+    printf("Time taken: %.2f ms.\n", elapsed_time);
+    printf("Total bytes received: %zu.\n", total_bytes_received);
+    printf("Average bandwidth: %.2f bytes/second.\n", bandwidth);
 }
 
 int main(int argc, char *argv[]) {
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    printf("Handshake successful\n");
+    printf("Handshake successful - connection established.\n");
 
     //printf("Connected to %s:%d\n", client_ip, client_port);
     char *buffer = (char *)malloc(BUFFER_SIZE);
@@ -127,11 +127,7 @@ int main(int argc, char *argv[]) {
     time_t start_time, end_time;
     while (1) {
 
-        size_t total_bytes_received = 0;
-        size_t bytes_received;
-
-
-        printf("Receiving file from client . . .\n");
+        printf("Receiving file from client...\n");
         // Receive the file from the sender
         FILE *file = fopen("received_file.bin", "wb");
         if (file == NULL) {
@@ -143,6 +139,9 @@ int main(int argc, char *argv[]) {
         }
         
         start_time = clock();
+
+        size_t total_bytes_received = 0;
+        size_t bytes_received;
 
         while (total_bytes_received < FILE_SIZE) {
             if((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) <= 0){
@@ -166,20 +165,23 @@ int main(int argc, char *argv[]) {
 
         end_time = clock();
 
-        printf("Received bytes: %zu\n", total_bytes_received);
+        printf("Received %zu bytes of data from (add later) \n.", total_bytes_received);
         fclose(file);
-
-        calculate_and_print_statistics(start_time, end_time, total_bytes_received); 
 
         printf("Waiting for client's decision...\n");
 
         char decision;
-        if (recv(client_socket, &decision, sizeof(decision), 0) <= 0) {
+        int decision_bytes;
+        decision_bytes = recv(client_socket, &decision, sizeof(decision), 0);
+        if (decision_bytes < 0) {
             perror("Error receiving client response");
             free(buffer);
             close(client_socket);
             close(listening_socket);
             return -1;
+        }else if(decision_bytes == 0){
+            printf("Client (add later) disconnected.");
+            break;
         }
 
         if (decision == 'y') {
@@ -202,10 +204,12 @@ int main(int argc, char *argv[]) {
        
     }
 
-
+    printf("Closing connection...\n");
+    // Close the TCP connection
     free(buffer);
     close(client_socket);
     close(listening_socket);
-    printf("Exited program.\n");
+    
+    printf("Print statistics here\n");
     return 0;
 }
