@@ -12,15 +12,56 @@
 #include <time.h>
 
 #define FILE_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
-#define BUFFER_SIZE 2 * 1000  
+#define BUFFER_SIZE 2 * 1024  // Size of each packet
+#define STATISTICS_SIZE 100 // Maximum iterations (resend the file)
 
-void calculate_and_print_statistics(time_t start_time, time_t end_time, size_t total_bytes_received) {
-    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-    double bandwidth = total_bytes_received / elapsed_time;
-    printf("Time taken: %.2f ms.\n", elapsed_time);
-    printf("Total bytes received: %zu.\n", total_bytes_received);
-    printf("Average bandwidth: %.2f bytes/second.\n", bandwidth);
+void print_statistics(double *timeTaken, double *transferSpeed, char *algo) {
+    int iteration =0;
+    double total_Time =0;
+    double total_Speed=0;
+    while(timeTaken[iteration]!=0){
+        total_Time+=timeTaken[iteration];
+        total_Speed+=transferSpeed[iteration];
+        iteration++;
+        
+    }
+
+    double average_Time = total_Time/iteration;
+    double average_Speed = total_Speed/iteration;
+    
+    printf("- - - - - - - - - - - - - - - - - -\n");
+    printf("\n-        * Statistics *           -\n");
+    printf("- Algorithm: %s\n", algo);
+    printf("- The file was sent %d times\n", (iteration));
+    printf("- Average time taken to receive the file: %.2f ms.\n", average_Time);
+    printf("- Average throughput: %.2f Mbps\n", average_Speed );
+    printf("- Total time: %.2f ms\n", total_Time );
+    printf("\nIndividual samples:\n");
+
+    iteration =0;
+    while(timeTaken[iteration]!=0){
+        printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", iteration, timeTaken[iteration], transferSpeed[iteration]);
+    }
+
+    printf("- - - - - - - - - - - - - - - - - -\n");
+    printf("Receiver end.");
+
 }
+
+void updateStatistics(double *timeTaken, double *transferSpeed, time_t start_time, time_t end_time, size_t total_bytes_received, int iteration) {
+    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+    double throughput_mbps = (total_bytes_received) / (1024 * 1024 * elapsed_time); // Transfer speed in Mbps
+
+    // Calculate time taken in milliseconds
+    double time_taken_ms = elapsed_time * 1000;
+
+    // Insert values into the arrays
+    timeTaken[iteration] = time_taken_ms; 
+    transferSpeed[iteration] = throughput_mbps; 
+}
+
+
+
 
 int main(int argc, char *argv[]) {
     if (argc != 5 || strcmp(argv[1], "-p") != 0 || strcmp(argv[3], "-algo") != 0) {
@@ -139,12 +180,37 @@ int main(int argc, char *argv[]) {
     char *buffer = (char *)malloc(BUFFER_SIZE);
 
     if (buffer == NULL) {
-            printf("Error allocating memory for buffer\n");
-            close(client_socket);
-            close(listening_socket);
-            return -1;
+        printf("Error allocating memory for buffer\n");
+        close(client_socket);
+        close(listening_socket);
+        return -1;
     }
+
+    double *timeTaken = (double *)malloc(BUFFER_SIZE * sizeof(double));
+
+    if (timeTaken == NULL) {
+        printf("Error allocating memory for timeTaken\n");
+        free(buffer);
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+    }
+
+    double *transferSpeed = (double *)malloc(BUFFER_SIZE * sizeof(double));
+
+    if (transferSpeed == NULL) {
+        printf("Error allocating memory for transferSpeed\n");
+        free(timeTaken);
+        free(buffer);
+        close(client_socket);
+        close(listening_socket);
+        return -1;
+    }
+
+
     time_t start_time, end_time;
+    int iteration=0; //Iteration counter
+
     while (1) {
 
         printf("Receiving file from client...\n");
@@ -152,6 +218,8 @@ int main(int argc, char *argv[]) {
         FILE *file = fopen("received_file.bin", "wb");
         if (file == NULL) {
             perror("Error opening file for writing");
+            free(timeTaken);
+            free(transferSpeed);
             free(buffer);
             close(client_socket);
             close(listening_socket);
@@ -166,6 +234,8 @@ int main(int argc, char *argv[]) {
         while (total_bytes_received < FILE_SIZE) {
             if((bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0)) <= 0){
                 perror("Error receiving file's content from client");
+                free(timeTaken);
+                free(transferSpeed);
                 free(buffer);
                 close(client_socket);
                 close(listening_socket);
@@ -174,6 +244,8 @@ int main(int argc, char *argv[]) {
             size_t bytes_written = fwrite(buffer, 1, bytes_received, file);
             if (bytes_written != bytes_received) {
                 perror("Error writing to file");
+                free(timeTaken);
+                free(transferSpeed);
                 free(buffer);
                 fclose(file);
                 close(client_socket);
@@ -188,6 +260,8 @@ int main(int argc, char *argv[]) {
         printf("Received %zu bytes of data from %s:%d.\n", total_bytes_received, client_ip, port);
         fclose(file);
 
+        updateStatistics(timeTaken, transferSpeed , start_time, end_time, total_bytes_received, iteration++);
+
         printf("Waiting for client's decision...\n");
 
         char decision;
@@ -195,6 +269,8 @@ int main(int argc, char *argv[]) {
         decision_bytes = recv(client_socket, &decision, sizeof(decision), 0);
         if (decision_bytes < 0) {
             perror("Error receiving client response");
+            free(timeTaken);
+            free(transferSpeed);
             free(buffer);
             close(client_socket);
             close(listening_socket);
@@ -208,14 +284,24 @@ int main(int argc, char *argv[]) {
             printf("Client responded with 'y', sending sync byte...\n");
             if (send(client_socket, "S", 1, 0) <= 0) {
                 perror("Error sending sync byte");
+                 free(timeTaken);
+                free(transferSpeed);
                 free(buffer);
                 close(client_socket);
                 close(listening_socket);
                 return -1;
             }
         } else if (decision == 'n') {
-            printf("Client responded with 'n'. Exiting program...\n");
-            break;
+            printf("Client responded with 'n'.\n");
+            printf("Closing connection...\n");
+            // Close the TCP connection
+            free(timeTaken);
+            free(transferSpeed);
+            free(buffer);
+            close(client_socket);
+            close(listening_socket);
+            print_statistics(timeTaken,transferSpeed,congestion_algorithm);
+            return 0;
         } else {
             printf("Unexpected response received. Closing connection...\n");
             return -1;
@@ -226,10 +312,11 @@ int main(int argc, char *argv[]) {
 
     printf("Closing connection...\n");
     // Close the TCP connection
+    free(timeTaken);
+    free(transferSpeed);
     free(buffer);
     close(client_socket);
     close(listening_socket);
     
-    printf("Print statistics here\n");
     return 0;
 }

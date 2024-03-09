@@ -11,7 +11,7 @@
 #include <time.h>
 
 #define FILE_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
-#define BUFFER_SIZE  2 * 1000 
+#define BUFFER_SIZE  2 * 1024 // Size of packets
 
 void generate_random_file(const char *filename, size_t size) {
     FILE *file = fopen(filename, "wb");
