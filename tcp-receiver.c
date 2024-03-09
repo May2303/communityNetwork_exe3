@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
             printf("Client responded with 'y', sending sync byte...\n");
             if (send(client_socket, "S", 1, 0) <= 0) {
                 perror("Error sending sync byte");
-                 free(timeTaken);
+                free(timeTaken);
                 free(transferSpeed);
                 free(buffer);
                 close(client_socket);
