@@ -5,11 +5,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdlib.h>
+#include <netinet/tcp.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
 #include <arpa/inet.h>
+
+
+
 
 
 #define FILE_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
@@ -52,7 +56,7 @@ int main(int argc, char *argv[]) {
 
     const char *receiver_ip = argv[2];
     int receiver_port = atoi(argv[4]);
-    const char *congestion_algorithm = argv[6];
+    const char *congestion_  = argv[6];
     const char *file_name = "random_file.bin";
 
     // Generate random file of at least 2MB size
@@ -65,6 +69,25 @@ int main(int argc, char *argv[]) {
         perror("Error creating socket");
         return -1;
     }
+
+    // Set TCP congestion control algorithm
+    int algorithm;
+    if (strcmp(congestion_algorithm, "cubic") == 0) {
+        algorithm = TCP_CONGESTION_CUBIC;
+    } else if (strcmp(congestion_algorithm, "reno") == 0) {
+        algorithm = TCP_CONGESTION_RENO;
+    } else {
+        printf("Invalid congestion algorithm: %s\n", congestion_algorithm);
+        close(sock);
+        return -1;
+    }
+
+    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, algorithm, strlen(algorithm)) < 0) {
+        perror("setsockopt() failed");
+        close(sock);
+        return -1;
+    }
+
 
     // Set up connection parameters
     struct sockaddr_in server_address;
@@ -124,7 +147,7 @@ int main(int argc, char *argv[]) {
         if (decision == 'y')
             printf("Continuing...\n");
 
-        printf("Sending %zu bytes of data...\n", FILE_SIZE);
+        printf("Sending %d bytes of data...\n", FILE_SIZE);
         // Send the file
         FILE *file = fopen(file_name, "rb");
         if (file == NULL) {
