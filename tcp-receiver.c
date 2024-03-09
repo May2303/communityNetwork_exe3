@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
 
         if (decision == 'y') {
             printf("Client responded with 'y', sending sync byte...\n");
-            if (send(client_socket, "S", 1, 0) == -1) {
+            if (send(client_socket, "S", 1, 0) <= 0) {
                 perror("Error sending sync byte");
                 free(buffer);
                 close(client_socket);
@@ -193,18 +193,19 @@ int main(int argc, char *argv[]) {
             }
         } else if (decision == 'n') {
             printf("Client responded with 'n'. Exiting program...\n");
-            free(buffer);
-            close(client_socket);
-            close(listening_socket);
             break;
         } else {
-            printf("Invalid response received. Continuing loop...\n");
+            printf("Unexpected response received. Closing connection...\n");
+            return -1;
         }
 
-        close(client_socket);
+       
     }
 
+
     free(buffer);
+    close(client_socket);
     close(listening_socket);
+    printf("Exited program.\n");
     return 0;
 }

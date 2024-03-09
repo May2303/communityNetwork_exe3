@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
         if (decision == 'n')
             break;
         else if (decision == 'y'){
-           printf("Waiting for the server to be ready . . .\n");
+            printf("Waiting for the server to be ready . . .\n");
 
             // Receive the sync byte from the receiver
             char sync_byte;
