@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     // Set TCP congestion control algorithm
     if (strcmp(congestion_algorithm, "cubic") != 0 && strcmp(congestion_algorithm, "reno") != 0 ) {
         printf("Invalid congestion algorithm: %s\n", congestion_algorithm);
-        close(sock);
+        close(listening_socket);
         return -1;
     }
 
