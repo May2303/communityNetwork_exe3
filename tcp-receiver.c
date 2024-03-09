@@ -36,7 +36,7 @@ void print_statistics(double *timeTaken, double *transferSpeed, char *algo, int 
     printf("\nIndividual samples:\n");
 
     for(int j=0; j<iteration; j++){
-        printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", j, timeTaken[j], transferSpeed[j]);
+        printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", j+1, timeTaken[j], transferSpeed[j]);
     }
 
     printf("- - - - - - - - - - - - - - - - - -\n");
@@ -259,8 +259,9 @@ int main(int argc, char *argv[]) {
         fclose(file);
 
         updateStatistics(timeTaken, transferSpeed , start_time, end_time, total_bytes_received, iteration);
+        printf("Time taken: %.2f\n", timeTaken[iteration]);
         iteration++;
-
+        
         printf("Waiting for client's decision...\n");
 
         char decision;
