@@ -15,31 +15,28 @@
 #define BUFFER_SIZE 2 * 1024  // Size of each packet
 #define STATISTICS_SIZE 100 // Maximum iterations (resend the file)
 
-void print_statistics(double *timeTaken, double *transferSpeed, char *algo) {
-    int iteration =0;
+void print_statistics(double *timeTaken, double *transferSpeed, char *algo, iteration) {
     double total_Time =0;
     double total_Speed=0;
-    while(timeTaken[iteration]!=0){
-        total_Time+=timeTaken[iteration];
-        total_Speed+=transferSpeed[iteration];
-        iteration++;
-        
+    for(int i=0; i<=iteration; i++){
+        total_Time+=timeTaken[i];
+        total_Speed+=transferSpeed[i];
     }
 
-    double average_Time = total_Time/iteration;
-    double average_Speed = total_Speed/iteration;
+    double average_Time = total_Time/(iteration+1);
+    double average_Speed = total_Speed/(iteration+1);
     
     printf("- - - - - - - - - - - - - - - - - -\n");
     printf("\n-        * Statistics *           -\n");
     printf("- Algorithm: %s\n", algo);
-    printf("- The file was sent %d times\n", (iteration));
+    printf("- The file was sent %d times\n", (iteration+1));
     printf("- Average time taken to receive the file: %.2f ms.\n", average_Time);
     printf("- Average throughput: %.2f Mbps\n", average_Speed );
     printf("- Total time: %.2f ms\n", total_Time );
     printf("\nIndividual samples:\n");
 
     iteration =0;
-    while(timeTaken[iteration]!=0){
+    for(int j=0; j<=iteration; j++){
         printf("- Run #%d Data: Time=%.2fms; Speed=%.2fMB/s\n", iteration, timeTaken[iteration], transferSpeed[iteration]);
     }
 
@@ -302,7 +299,7 @@ int main(int argc, char *argv[]) {
             free(buffer);
             close(client_socket);
             close(listening_socket);
-            print_statistics(timeTaken,transferSpeed,congestion_algorithm);
+            print_statistics(timeTaken,transferSpeed,congestion_algorithm, iteration);
             return 0;
         } else {
             printf("Unexpected response received. Closing connection...\n");
