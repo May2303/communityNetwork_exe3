@@ -39,7 +39,7 @@ void generate_random_file(const char *filename, size_t size) {
 
 void print_statistics(clock_t start_time, clock_t end_time, size_t file_size_bytes) {
     double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-    printf("Time taken: %.2f ms\n", elapsed_time);
+    printf("Time taken: %.2f ms\n", (elapsed_time * 1000));
 }
 
 int main(int argc, char *argv[]) {
