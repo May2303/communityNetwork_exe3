@@ -5,9 +5,10 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 
-#define RUDP_SYN 0x01
-#define RUDP_ACK 0x02
-#define RUDP_FIN 0x04
+#define RUDP_DEF 0x00 // Standard data transfering packet flag
+#define RUDP_SYN 0x01 // Sync flag
+#define RUDP_ACK 0x02 // Acknowledgement flag
+#define RUDP_FIN 0x04 // Ending program/connection flag
 #define PACKET_SIZE 1024
 
 typedef struct {
@@ -16,11 +17,41 @@ typedef struct {
     uint8_t flags;
 } RUDP_Header;
 
-// Function to calculate the checksum of data
-uint16_t calculate_checksum(const char *data, int length) {
-    // Implement checksum calculation logic (e.g., CRC or simple checksum)
-    // ...
+/* 
+Function to calculate the one's complement checksum of binary data
+Parameters:
+data: Pointer to the binary data buffer
+packet_length: Length of the data buffer in bytes
+Iterates over the data and sums it in 16bit and folds the sum. 
+Returns:
+    The complement of sum
+*/
+
+uint16_t calculate_checksum(const uint8_t *data, int packet_length) {
+    uint32_t sum = 0; // Initialize a 32-bit sum variable
+    
+    // Iterate over each 16-bit word of the data (assuming packet_length is even)
+    for (int i = 0; i < packet_length / 2; i++) {
+        // Combine two bytes into a 16-bit word and add it to the sum
+        sum += ((uint16_t)data[2*i] << 8) + data[2*i+1];
+    }
+
+    // If packet_length is odd, add the last byte as a padded 16-bit word
+    if (packet_length % 2) {
+        sum += ((uint16_t)data[packet_length - 1] << 8);
+    }
+
+    // Fold the carry bits into the sum
+    while (sum >> 16) {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    // Take the one's complement of the sum
+    uint16_t checksum = ~sum; // Calculate one's complement checksum
+
+    return checksum; // Return the calculated checksum
 }
+
 
 // Function to handle timeouts during data transmission
 int handle_timeout(int sockfd) {
