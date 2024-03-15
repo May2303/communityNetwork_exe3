@@ -10,7 +10,7 @@
 #include <errno.h>
 
 //Flags:
-#define RUDP_DEF 0x00 // Standard data transfering packet flag
+#define RUDP_DATA 0x00 // Standard data transfering packet flag
 #define RUDP_SYN 0x01 // Sync flag
 #define RUDP_ACK 0x02 // Acknowledgement flag
 #define RUDP_FIN 0x04 // Ending program/connection flag
@@ -72,8 +72,8 @@ int send_with_retries(int sockfd, const char *receiver_ip, int port, const char 
     // ...
 }
 
-// Function to set up a UDP receiver socket
-int set_udp_receiver_socket(int port) {
+// Function to set up an RUDP socket for the receiver (server) side and perform handshake
+int rudp_socket(int port, struct sockaddr_in *sender_addr) {
     // Create a UDP socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {
@@ -89,26 +89,44 @@ int set_udp_receiver_socket(int port) {
         return -1;
     }
 
-    // Set up the local address structure
-    struct sockaddr_in local_addr;
-    memset(&local_addr, 0, sizeof(local_addr));
-    local_addr.sin_family = AF_INET;
-    local_addr.sin_addr.s_addr = INADDR_ANY;
-    local_addr.sin_port = htons(port);
+    // Set up the sender address structure for receiving handshake
+    memset(sender_addr, 0, sizeof(*sender_addr));
+    sender_addr->sin_family = AF_INET;
+    sender_addr->sin_addr.s_addr = INADDR_ANY;
+    sender_addr->sin_port = htons(port);
 
     // Bind the socket to the local address
-    if (bind(sockfd, (struct sockaddr *)&local_addr, sizeof(local_addr)) == -1) {
+    if (bind(sockfd, (struct sockaddr *)sender_addr, sizeof(*sender_addr)) == -1) {
         perror("bind");
         close(sockfd);
         return -1;
     }
 
+    // Perform handshake receive and obtain sender's address
+    socklen_t addrlen = sizeof(*sender_addr);
+    if (receive_handshake(sockfd, (struct sockaddr *)sender_addr, &addrlen) == -1) {
+        perror("receive_handshake");
+        close(sockfd);
+        return -1;
+    }
+
+    // Perform handshake send to send acknowledgment
+    if (send_handshake(sockfd, (struct sockaddr *)sender_addr, addrlen) == -1) {
+        perror("send_handshake");
+        close(sockfd);
+        return -1;
+    }
+
+    printf("Handshake completed successfully.\n");
+
     // Return the socket descriptor
     return sockfd;
 }
 
-// Function to set up a UDP socket for the sender (client) side
-int set_sender_socket(const char *dest_ip, int dest_port) {
+
+
+// Function to set up an RUDP socket for the sender (client) side and perform handshake
+int rudp_socket(const char *dest_ip, int dest_port, struct sockaddr_in *receiver_addr) {
     // Create a UDP socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {
@@ -124,33 +142,51 @@ int set_sender_socket(const char *dest_ip, int dest_port) {
         return -1;
     }
 
-    // Set up the destination address structure
-    struct sockaddr_in dest_addr;
-    memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(dest_port);
-    if (inet_pton(AF_INET, dest_ip, &dest_addr.sin_addr) != 1) {
+    // Set up the receiver address structure
+    memset(receiver_addr, 0, sizeof(*receiver_addr));
+    receiver_addr->sin_family = AF_INET;
+    receiver_addr->sin_port = htons(dest_port);
+    if (inet_pton(AF_INET, dest_ip, &receiver_addr->sin_addr) != 1) {
         perror("inet_pton");
         close(sockfd);
         return -1;
     }
 
+    // Send handshake message to the receiver
+    if (send_handshake(sockfd, (struct sockaddr *)receiver_addr, sizeof(*receiver_addr)) == -1) {
+        perror("send_handshake");
+        close(sockfd);
+        return -1;
+    }
+
+    // Receive handshake acknowledgment from the receiver
+    socklen_t addrlen = sizeof(*receiver_addr);
+    if (receive_handshake(sockfd, (struct sockaddr *)receiver_addr, &addrlen) == -1) {
+        perror("receive_handshake");
+        close(sockfd);
+        return -1;
+    }
+
+    printf("Handshake completed successfully.\n");
+
     // Return the socket descriptor
     return sockfd;
 }
 
+
+
 // Function to send data over RUDP connection with custom header
-int rudp_send(const uint8_t *data, uint8_t flag, int sockfd, struct sockaddr *dest_addr, socklen_t addrlen) {
+int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd, struct sockaddr *dest_addr, socklen_t addrlen) {
     // Construct the RUDP header
     RUDP_Header header;
-    header.length = PACKET_SIZE; // Set the length field
+    header.length = data_length; // Set the length field
     header.flag = flag; // Set the flag field
     
     // Calculate checksum for the data (you need to implement this function)
-    header.checksum = calculate_checksum(data, PACKET_SIZE);
+    header.checksum = calculate_checksum(data, data_length);
     
     // Allocate memory for the packet buffer
-    uint8_t *packet = malloc(sizeof(RUDP_Header) + PACKET_SIZE);
+    uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) + data_length);
     if (packet == NULL) {
         return -1; // Return error code if memory allocation failed
     }
@@ -159,10 +195,10 @@ int rudp_send(const uint8_t *data, uint8_t flag, int sockfd, struct sockaddr *de
     memcpy(packet, &header, sizeof(RUDP_Header));
 
     // Copy the data into the packet buffer after the header
-    memcpy(packet + sizeof(RUDP_Header), data, PACKET_SIZE);
+    memcpy(packet + sizeof(RUDP_Header), data, data_length);
     
     // Send the packet over the network using sendto
-    int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) + PACKET_SIZE, 0, dest_addr, addrlen);
+    int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) + data_length, 0, dest_addr, addrlen);
     
     // Free the memory allocated for the packet buffer
     free(packet);
@@ -175,56 +211,109 @@ int rudp_send(const uint8_t *data, uint8_t flag, int sockfd, struct sockaddr *de
 }
 
 
-//TODO: Go over this function and complete it. It is uncompleted.
+//TODO: Deal with each flag case.
 // Function to receive data over RUDP connection with custom header
 int rudp_recv(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, FILE *file) {
+    // Allocate memory for the packet buffer
+    uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) + PACKET_SIZE);
+    if (packet == NULL) {
+        return -1; // Return error code if memory allocation failed
+    }
 
-    uint8_t *buffer = (uint8_t *)malloc(PACKET_SIZE); //Buffer to read data received
+    // If src_addr is NULL, allocate memory for it and set addrlen accordingly
+    struct sockaddr_in sender_addr; // Temporary variable to hold sender's address
+    if (src_addr == NULL) {
+        src_addr = (struct sockaddr *)&sender_addr;
+        *addrlen = sizeof(sender_addr);
+    }
 
     // Receive the packet over the network using recvfrom
-    int bytes_received = recvfrom(sockfd, buffer, sizeof(RUDP_Header)+ PACKET_SIZE, 0, src_addr, addrlen);
+    int bytes_received = recvfrom(sockfd, packet, sizeof(RUDP_Header) + PACKET_SIZE, 0, src_addr, addrlen);
     if (bytes_received == -1) {
         perror("recvfrom");
+        free(packet);
         return -1; // Return error code if receiving packet failed
     }
 
     // Extract header fields from the received packet
     RUDP_Header header;
-    memcpy(&header, buffer, sizeof(RUDP_Header));
+    memcpy(&header, packet, sizeof(RUDP_Header));
 
-    // Extract data from the received packet
-    uint8_t *data = buffer + sizeof(RUDP_Header);
+    // Calculate data length
     int data_length = bytes_received - sizeof(RUDP_Header);
 
-    // Calculate checksum for the received data
-    uint16_t checksum = calculate_checksum(data, data_length);
+    // Calculate checksum for the received data (without header)
+    uint16_t checksum = calculate_checksum(packet + sizeof(RUDP_Header), data_length);
 
     // Compare checksum with the checksum field in the header
     if (checksum != header.checksum) {
-        printf("Checksum verification failed\n");
+        printf("Checksum mismatch: header checksum = %d, actual checksum = %d\n", header.checksum, checksum);
+        free(packet);
         return -1; // Return error code if checksum verification failed
     }
 
-    // Write the received data to the file
-    fwrite(data, sizeof(uint8_t), data_length, file);
+    // Compare length with the length field in the header
+    if (header.length != data_length) {
+        printf("Length mismatch: header length = %d, actual length = %d\n", header.length, data_length);
+        free(packet);
+        return -1; // Return error code if length mismatch
+    }
+
+    // Handle the received packet based on the flag value
+    switch (header.flags) {
+        case RUDP_ACK:
+            // Handle ACK packet
+            printf("Received ACK packet\n");
+            break;
+        case RUDP_SYN:
+            // Handle SYN packet
+            printf("Received SYN packet\n");
+            break;
+        case RUDP_FIN:
+            // Handle FIN packet
+            printf("Received FIN packet\n");
+            break;
+        case RUDP_DATA:
+            // Open the file in "append binary" mode
+            file = fopen("received_data.bin", "ab");
+            if (file == NULL) {
+                perror("fopen");
+                free(packet);
+                return -1; // Return error code if file opening failed
+            }
+
+            // Write the received data to the file
+            fwrite(packet + sizeof(RUDP_Header), sizeof(uint8_t), data_length, file);
+            if (file != NULL) {
+                fclose(file);
+            }
+            break;
+        default:
+            // Invalid flag value
+            printf("Error: Invalid flag value\n");
+            free(packet);
+            return -1; // Return error code
+    }
+
+    free(packet);
 
     return 0; // Return success status code
 }
+
 
 void rudp_close(int sockfd) {
     // Close the RUDP connection
     // ...
 }
 
-/ Function to generate a random byte
+// Function to generate a random byte
 uint8_t generate_random_byte() {
     return (uint8_t)rand() % 256;
 }
 
 
-// TODO: Fix sum check + rudp_recv call
-// Function to perform handshake with the receiver
-int sender_handshake(int sockfd, const struct sockaddr *dest_addr, socklen_t addrlen) {
+// Function to send handshake message
+int send_handshake(int sockfd, const struct sockaddr *dest_addr, socklen_t addrlen) {
     // Generate a random byte for the handshake message
     uint8_t handshake_byte = generate_random_byte();
 
@@ -234,64 +323,24 @@ int sender_handshake(int sockfd, const struct sockaddr *dest_addr, socklen_t add
         return -1;
     }
 
-    printf("Handshake message sent: %u\n", handshake_byte);
+    printf("Handshake message sent.\n", handshake_byte);
 
-    // Receive the handshake acknowledgment using RUDP
-    uint8_t recv_byte;
-    if (rudp_recv(&recv_byte, sizeof(recv_byte), sockfd, dest_addr, &addrlen) == -1) {
-        perror("rudp_recv");
-        return -1;
-    }
-
-    printf("Handshake acknowledgment received: %u\n", recv_byte);
-
-    // Calculate checksum for the received byte
-    uint16_t checksum = calculate_checksum(&recv_byte, sizeof(recv_byte));
-
-    // Compare checksum with the acknowledgment packet's checksum
-    if (checksum != 0) {
-        printf("Checksum verification failed\n");
-        return -1;
-    }
-
-    printf("Handshake successful\n");
-
-    // Handshake successful
+    
+    // Handshake message successfuly sent
     return 0;
 }
 
-// TODO: Fix sum check + rudp_recv call
-// Function to perform handshake with the sender
-int receiver_handshake(int sockfd, struct sockaddr *sender_addr, socklen_t *addrlen) {
-    // Receive the handshake message using RUDP
-    uint8_t recv_byte;
-    if (rudp_recv(&recv_byte, sizeof(recv_byte), sockfd, sender_addr, addrlen) == -1) {
+
+// Function to receive handshake message
+int receive_handshake(int sockfd, struct sockaddr *sender_addr, socklen_t *addrlen) {
+
+   // Receive the handshake acknowledgment using RUDP
+    if (rudp_recv(sockfd, dest_addr, &addrlen, NULL) == -1) {
         perror("rudp_recv");
         return -1;
     }
+    printf("Handshake message received.\n");
 
-    printf("Handshake message received: %u\n", recv_byte);
-
-    // Calculate checksum for the received byte
-    uint16_t checksum = calculate_checksum(&recv_byte, sizeof(recv_byte));
-
-    // Compare checksum with the handshake message's checksum
-    if (checksum != 0) {
-        printf("Checksum verification failed\n");
-        return -1;
-    }
-
-    // Generate a random byte for the handshake acknowledgment
-    uint8_t ack_byte = generate_random_byte();
-
-    // Send the handshake acknowledgment using RUDP
-    if (rudp_send(&ack_byte, sizeof(ack_byte), RUDP_ACK, sockfd, sender_addr, *addrlen) == -1) {
-        perror("rudp_send");
-        return -1;
-    }
-
-    printf("Handshake acknowledgment sent: %u\n", ack_byte);
-
-    // Handshake successful
+    // Handshake message successfuly received
     return 0;
 }
