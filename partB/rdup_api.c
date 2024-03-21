@@ -4,12 +4,14 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 #define RUDP_DEF 0x00 // Standard data transfering packet flag
 #define RUDP_SYN 0x01 // Sync flag
 #define RUDP_ACK 0x02 // Acknowledgement flag
 #define RUDP_FIN 0x04 // Ending program/connection flag
 #define PACKET_SIZE 1024
+#define MAX_SEQ_NUM 1000 // Maximum sequence number expected
 
 typedef struct {
     uint16_t length;
@@ -65,9 +67,49 @@ int send_with_retries(int sockfd, const char *receiver_ip, int port, const char 
     // ...
 }
 
+bool detect_packet_loss(const int *ack_seq_numbers, int num_acks) {
+    bool packet_loss = false;
+    bool received[MAX_SEQ_NUM] = { false };
+
+    // Mark received sequence numbers
+    for (int i = 0; i < num_acks; ++i) {
+        if (ack_seq_numbers[i] >= 0 && ack_seq_numbers[i] < MAX_SEQ_NUM) {
+            received[ack_seq_numbers[i]] = true;
+        }
+    }
+
+    // Check for missing sequence numbers
+    for (int i = 0; i < MAX_SEQ_NUM; ++i) {
+        if (!received[i]) {
+            printf("Packet with sequence number %d is missing.\n", i);
+            packet_loss = true;
+        }
+    }
+
+    return packet_loss;
+}
+
+
 void rudp_socket(int *sockfd, int port) {
-    // Create a UDP socket and bind to the specified port
-    // ...
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (*sockfd < 0) {
+        perror("Error creating socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Bind the socket to the specified port
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(port);
+
+    if (bind(*sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Error binding socket");
+        close(*sockfd);
+        exit(EXIT_FAILURE);
+    }
+
 }
 
 int rudp_send(int sockfd, const char *receiver_ip, int port, const char *file_path, long fileSize) {
@@ -81,6 +123,5 @@ void rudp_recv(int sockfd, const char *file_path) {
 }
 
 void rudp_close(int sockfd) {
-    // Close the RUDP connection
-    // ...
+    close(sockfd);
 }
