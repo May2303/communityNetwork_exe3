@@ -47,9 +47,6 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
    
- /* OPTIONAL??
-    rudp_socket(&sock, port);
-    */
     // Read the created file
     char filename[BUFFER_SIZE];
     printf("Enter the filename: ");
