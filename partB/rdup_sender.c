@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
         clock_t start_time = clock();
 
         size_t total_bytes_received = 0;
-        size_t bytes_received;
+        unit8_t* bytes_received;
 
         //Extract data from file
         while ((bytes_received = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
                 errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
             }
             
-            total_bytes_received += bytes_received;
+            total_bytes_received += sizeof(buffer);
         }
 
         clock_t end_time = clock(); 
