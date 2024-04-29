@@ -1,141 +1,229 @@
-// RUDP_Sender.c
-#include "stdio.h"
-#include "rdup_api.c"
-#include <stdlib.h> 
-#include <errno.h> 
-#include <string.h> 
-#include <sys/types.h> 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
+// Sender file
+#include <rdup_api.c>
+#include <stdio.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <netinet/tcp.h>
+#include <string.h>
+#include <errno.h>
+#include <signal.h>
+#include <time.h>
+#include <arpa/inet.h>
 
-#define RUDP_SYN 0x01
-#define RUDP_ACK 0x02
-#define RUDP_FIN 0x04
-#define PACKET_SIZE 1024
 
-#define SERVER_IP_ADDRESS "127.0.0.1"
-#define SERVER_PORT 5060
-#define BUFFER_SIZE 100
+
+
+
+#define FILE_SIZE 2 * 1024 * 1024 // 2 Megabytes buffer size
+#define BUFFER_SIZE  2 * 1024 // Size of packets
+
+void generate_random_file(const char *filename, size_t size) {
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) {
+        printf("Error opening file for writing\n");
+        return;
+    }
+
+    char *buffer = (char *)malloc(size);
+    if (buffer == NULL) {
+        printf("Error allocating memory for buffer\n");
+        fclose(file);
+        return;
+    }
+
+    // Generate random data and write to file
+    for (size_t i = 0; i < size; i++) {
+        buffer[i] = rand() % 256; // Generate random byte
+    }
+    fwrite(buffer, 1, size, file);
+
+    free(buffer);
+    fclose(file);
+}
+
+void print_statistics(clock_t start_time, clock_t end_time) {
+    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+    printf("Time taken: %.2f ms\n", (elapsed_time * 1000));
+}
 
 int main(int argc, char *argv[]) {
-    
-    
-    int sock = -1;
-    char bufferReply[80] = {'\0'};
-
+    if (argc != 5 || strcmp(argv[1], "-ip") != 0 || strcmp(argv[3], "-p") != 0) {
+        printf("Usage: %s -ip <ip> -p <receiver_port>\n", argv[0]);
+        return -1;
+    }
 
     const char *receiver_ip = argv[2];
-    int port = atoi(argv[4]);
+    int receiver_port = atoi(argv[4]);
+    const char *file_name = "random_file.bin";
 
-    if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){
-        printf("Could not create socket : %d", errno);}
-        return -1;
+    // Generate random file of at least 2MB size
+    size_t file_size_bytes = FILE_SIZE;
+    generate_random_file(file_name, file_size_bytes);
 
-
-    // Setup the server address structure.
-	// Port and IP should be filled in network byte order (learn bin-endian, little-endian)
-	struct sockaddr_in serverAddress;
-	memset(&serverAddress, 0, sizeof(serverAddress));
-	serverAddress.sin_family = AF_INET;
-	serverAddress.sin_port = htons(SERVER_PORT);
-	int rval = inet_pton(AF_INET, (const char*)SERVER_IP_ADDRESS, &serverAddress.sin_addr);
-	if (rval <= 0)
-	{
-		printf("inet_pton() failed");
-		return -1;
-	}
-   
- /* OPTIONAL??
-    rudp_socket(&sock, port);
-    */
-    // Read the created file
-    char filename[BUFFER_SIZE];
-    printf("Enter the filename: ");
-    scanf("%s", filename);
-
-    FILE *file = fopen(filename, "rb");
-    if (file == NULL) {
-        printf("Could not open file: %s\n", filename);
+    int sockfd;
+    struct sockaddr_in *receiver_addr = malloc(sizeof(struct sockaddr_in));
+    if((sockfd = rudp_socket(receiver_ip, receiver_port, receiver_addr)) == -1){
+        printf("Error creating socket\n");
         return -1;
     }
+    
 
-    fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    char *fileContent = (char *)malloc(fileSize);
-    if (fileContent == NULL) {
-        printf("Memory allocation failed");
-        fclose(file);
-        return -1;
+    char decision = 'n';
+    char *buffer = (char *)malloc(BUFFER_SIZE);
+    if (buffer == NULL) {
+            printf("Failed to create buffer \n");
+            free(buffer);
+            close(sockfd);
+            return -1;
     }
+    while (1) {
 
-    fread(fileContent, 1, fileSize, file);
-    fclose(file);
+        if (decision == 'y')
+            printf("Continuing...\n");
 
-  // Read the file and send it using RUDP
-	 if (rudp_send(sock, receiver_ip, port, fileContent, fileSize) == -1) {
-        printf("Error in sending file using RUDP\n");
-        free(fileContent);
-        close(sock);
-        return -1;
-    }
-
-
-    struct sockaddr_in fromAddress;
-	//Change type variable from int to socklen_t: int fromAddressSize = sizeof(fromAddress);
-	socklen_t fromAddressSize = sizeof(fromAddress);
-	memset((char *)&fromAddress, 0, sizeof(fromAddress));
-
-
-	// try to receive some data, this is a blocking call
-	if (recvfrom(sock, bufferReply, sizeof(bufferReply) -1, 0, (struct sockaddr *) &fromAddress, &fromAddressSize) == -1){
-		printf("recvfrom() failed with error code  : %d", errno);
-        return 1;
-    }
-    printf(bufferReply);
-
-  
-
-    // User decision: Send the file again?
-    char userDecision;
-    do {
-        printf("Do you want to send the file again? (y/n): ");
-        scanf(" %c", &userDecision);
-
-        if (userDecision == 'y' || userDecision == 'Y') {
-            // Send the file content using RUDP
-            if (rudp_send(sock, receiver_ip, port, fileContent, fileSize) == -1) {
-                printf("Error in sending file using RUDP\n");
-                free(fileContent);
-                close(sock);
-                return -1;
-            }
-        } else if (userDecision == 'n' || userDecision == 'N') {
-            // Send an exit message to the receiver
-            const char *exitMessage = "EXIT";
-            int exitMessageLen = strlen(exitMessage) + 1;
-
-            if (sendto(sock, exitMessage, exitMessageLen, 0, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
-                printf("sendto() failed with error code: %d\n", errno);
-                free(fileContent);
-                close(sock);
-                return -1;
-            }
-        } else {
-            printf("Invalid input. Please enter 'y' for yes or 'n' for no.\n");
+        printf("Sending %d bytes of data...\n", FILE_SIZE);
+        // Send the file
+        FILE *file = fopen(file_name, "rb");
+        if (file == NULL) {
+            perror("Error opening file for reading");
+            free(buffer);
+            close(sockfd);
+            return -1;
         }
-    } while (userDecision != 'n' && userDecision != 'N');
 
+        clock_t start_time = clock();
 
-    // Send an exit message to the receiver
+        size_t total_bytes_received = 0;
+        size_t bytes_received;
 
+        //Extract data from file
+        while ((bytes_received = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
+
+            // Send the data
+            if(rudp_send(bytes_received, buffer , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                perror("Error sending file");
+                free(buffer);
+                close(sockfd);
+                return -1;
+            }
+
+            // Receive ACK for current packet
+            int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+
+            // Resend data if timeout + handle errors
+            while(errorcode!=0){
+
+                //Error receiving ACK
+                if(errorcode == -1){
+                    perror("Error receiving ACK");
+                    free(buffer);
+                    close(sockfd);
+                    return -1;
+                }
+
+                //Timeout handling - send data again
+                rudp_send((uint8_t)decision, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr));
+
+                // Receive ACK for current packet
+                errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+            }
+            
+            total_bytes_received += bytes_received;
+        }
+
+        clock_t end_time = clock(); 
+
+        fclose(file);
+        printf("Successfully sent %ld bytes of data!\n", total_bytes_received);
+
+        // Calculate and print statistics
+        print_statistics(start_time, end_time);
+
+        // Ask user if they want to send more data
+        printf("Do you want to send more data? (y/n): ");
+        scanf(" %c", &decision);
+
+        while (decision != 'y' && decision != 'n') {
+            printf("Invalid answer, do you want to send more data? (y/n) ");
+            scanf(" %c", &decision);
+        }
+
+        if (decision == 'n'){
+            // Send the decision to the receiver
+            if(rudp_send((uint8_t)decision, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                perror("Error sending decision");
+                free(buffer);
+                close(sockfd);
+                return -1;
+            }
+
+            // Receive ACK for decision
+            int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+
+            // Resend data if timeout + handle errors
+            while(errorcode!=0){
+
+                //Error receiving ACK
+                if(errorcode == -1){
+                    perror("Error receiving ACK");
+                    free(buffer);
+                    close(sockfd);
+                    return -1;
+                }
+
+                //Timeout handling - send data again
+                rudp_send((uint8_t)decision, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr));
+
+                // Receive ACK for current packet
+                errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+            }
+            break;
+        }
+        else if (decision == 'y'){
+
+            // Send the decision to the receiver
+            if(rudp_send((uint8_t)decision, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                perror("Error sending decision");
+                free(buffer);
+                close(sockfd);
+                return -1;
+            }
+
+            printf("Waiting for the server to be ready...\n");
+
+            // Receive ACK for decision
+            int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+
+            // Resend data if timeout + handle errors
+            while(errorcode!=0){
+
+                //Error receiving ACK
+                if(errorcode == -1){
+                    perror("Error receiving ACK");
+                    free(buffer);
+                    close(sockfd);
+                    return -1;
+                }
+
+                //Timeout handling - send data again
+                rudp_send((uint8_t)decision, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr));
+
+                // Receive ACK for current packet
+                errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+            }
+    
+            printf("Server accepted your decision.\n");
+        }
+
+    }
+
+    printf("Closing connection...\n");
     // Close the RUDP connection
-    rudp_close(sock);
-    free(fileContent);
+    free(buffer);
+    close(sockfd);
 
-    // Exit
     return 0;
 }

@@ -89,6 +89,19 @@ int rudp_socket(int port, struct sockaddr_in *sender_addr) {
         return -1;
     }
 
+    //Set timeout for the socket
+    struct timeval timeout;      
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+    
+    if (setsockopt (sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                sizeof timeout) < 0)
+        error("setsockopt failed\n");
+
+    if (setsockopt (sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout,
+                sizeof timeout) < 0)
+        error("setsockopt failed\n");
+
     // Set up the sender address structure for receiving handshake
     memset(sender_addr, 0, sizeof(*sender_addr));
     sender_addr->sin_family = AF_INET;
@@ -141,6 +154,19 @@ int rudp_socket(const char *dest_ip, int dest_port, struct sockaddr_in *receiver
         close(sockfd);
         return -1;
     }
+
+    //Set timeout for the socket
+    struct timeval timeout;      
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+    
+    if (setsockopt (sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                sizeof timeout) < 0)
+        error("setsockopt failed\n");
+
+    if (setsockopt (sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout,
+                sizeof timeout) < 0)
+        error("setsockopt failed\n");
 
     // Set up the receiver address structure
     memset(receiver_addr, 0, sizeof(*receiver_addr));
@@ -235,6 +261,11 @@ int rudp_recv(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, FILE *f
         return -1; // Return error code if receiving packet failed
     }
 
+    if(bytes_received == ETIMEDOUT){
+        printf("Timeout\n");
+        return ETIMEDOUT;
+    }
+
     // Extract header fields from the received packet
     RUDP_Header header;
     memcpy(&header, packet, sizeof(RUDP_Header));
@@ -300,10 +331,9 @@ int rudp_recv(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, FILE *f
     return 0; // Return success status code
 }
 
-
+//TODO: Check if needs any addition
 void rudp_close(int sockfd) {
-    // Close the RUDP connection
-    // ...
+    close(sockfd);
 }
 
 // Function to generate a random byte
