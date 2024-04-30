@@ -369,7 +369,8 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
             return -1;
         }
         // Receive the handshake-ACK message using RUDP
-        errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), NULL);
+        int addrln = sizeof(receiver_addr);
+        errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)&addrln, NULL);
         retries++;
     }
     
