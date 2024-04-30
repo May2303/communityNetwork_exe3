@@ -1,3 +1,4 @@
+#include "rudp_api.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,7 +108,6 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
 }
 
 
-//TODO: Deal with each flag case.
 // Function to receive data over RUDP connection with custom header
 int rudp_recv(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file) {
     // Allocate memory for the packet buffer

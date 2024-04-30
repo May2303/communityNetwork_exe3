@@ -1,5 +1,5 @@
 // Receiver file
-#include "rudp_api.c"
+#include "rudp_api.h"
 #include <netinet/tcp.h> 
 #include <stdio.h>
 #include <unistd.h>

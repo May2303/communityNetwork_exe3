@@ -10,13 +10,13 @@ RUDP_Receiver: rudp_receiver.o rudp_api.o
 RUDP_Sender: rudp_sender.o rudp_api.o
 	$(CC) $(CFLAGS) -o RUDP_Sender rudp_sender.o rudp_api.o
 
-rudp_receiver.o: rudp_receiver.c rudp_api.o
+rudp_receiver.o: rudp_receiver.c rudp_api.h
 	$(CC) $(CFLAGS) -c rudp_receiver.c
 
-rudp_sender.o: rudp_sender.c rudp_api.o
+rudp_sender.o: rudp_sender.c rudp_api.h
 	$(CC) $(CFLAGS) -c rudp_sender.c
 
-rudp_api.o: rudp_api.c 
+rudp_api.o: rudp_api.c rudp_api.h
 	$(CC) $(CFLAGS) -c rudp_api.c
 
 clean:

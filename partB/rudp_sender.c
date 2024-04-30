@@ -1,5 +1,5 @@
 // Sender file
-#include "rudp_api.c"
+#include "rudp_api.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
