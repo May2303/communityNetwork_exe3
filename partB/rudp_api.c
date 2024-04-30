@@ -132,7 +132,7 @@ int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, so
     size_t data_length = packet_length - Header_Size;
 
     // Calculate checksum for the received data (without header)
-    uint16_t checksum = calculate_checksum(packet + Header_Size, data_length);
+    uint16_t checksum = calculate_checksum(packet + Header_Size -1, data_length);
 
     // Compare checksum with the checksum field in the header
     if (checksum != header.checksum) {
