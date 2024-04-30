@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 
             // Read data from file
             bytes_received = fread(buffer, 1, BUFFER_SIZE, file);
-            if (bytes_received == NULL) {
+            if (bytes_received <= BUFFER_SIZE) {
                 perror("Error reading file");
                 free(buffer);
                 close(sockfd);
