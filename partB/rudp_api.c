@@ -75,7 +75,7 @@ int send_with_retries(int sockfd, const char *receiver_ip, int port, const char 
 
 // Function to set up an RUDP socket for the receiver (server) side and perform handshake
 // Gets empty addr and fills in the details of the sender.
-int rudp_socket(int port, struct sockaddr_in *sender_addr) {
+int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
     // Create a UDP socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {
@@ -160,7 +160,7 @@ int rudp_socket(int port, struct sockaddr_in *sender_addr) {
 // Function to set up an RUDP socket for the sender (client) side and perform handshake
 // Gets empty addr and fills in the details of the receiver.
 
-int rudp_socket(const char *dest_ip, int dest_port, struct sockaddr_in *receiver_addr) {
+int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *receiver_addr) {
 
     // Create a RUDP socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);

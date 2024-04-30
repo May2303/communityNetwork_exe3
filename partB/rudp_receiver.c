@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     // Create RUDP socket
     int sockfd;
     struct sockaddr_in const *sender_addr = malloc(sizeof(struct sockaddr_in));
-    if((sockfd = rudp_socket(port, sender_addr)) == -1){
+    if((sockfd = rudp_socket_receiver(port, sender_addr)) == -1){
         printf("Error creating socket\n");
         return -1;
     }
