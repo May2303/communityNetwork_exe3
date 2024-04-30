@@ -109,7 +109,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
 
 //TODO: Deal with each flag case.
 // Function to receive data over RUDP connection with custom header
-int rudp_recv(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, FILE *file) {
+int rudp_recv(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file) {
     // Allocate memory for the packet buffer
     uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) + PACKET_SIZE);
     if (packet == NULL) {
@@ -207,7 +207,7 @@ int rudp_recv(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, FILE *f
 
 // Function to set up an RUDP socket for the receiver (server) side and perform handshake
 // Gets empty addr and fills in the details of the sender.
-int rudp_socket_receiver(int port, struct sockaddr *sender_addr) {
+int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
     // Create a UDP socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {
@@ -246,7 +246,7 @@ int rudp_socket_receiver(int port, struct sockaddr *sender_addr) {
     sender_addr->sin_port = htons(port);
 
     // Bind the socket to the local address
-    if (bind(sockfd, sender_addr, sizeof(*sender_addr)) == -1) {
+    if (bind(sockfd, (struct sockaddr *)sender_addr, sizeof(*sender_addr)) == -1) {
         perror("bind");
         rudp_close(sockfd);
         return -1;
