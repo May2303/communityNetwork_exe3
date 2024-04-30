@@ -5,7 +5,7 @@ CFLAGS = -Wall -Wextra -pedantic -std=c11
 all: RUDP_Receiver RUDP_Sender
 
 RUDP_Receiver: rudp_receiver.c rudp_api.c
-	$(CC) $(CFLAGS) -o RUDP_Receiver rudp_receiver.c 
+	$(CC) $(CFLAGS) -o RUDP_Receiver rudp_receiver.c rudp_api.c
 
 RUDP_Sender: rudp_sender.c rudp_api.c
 	$(CC) $(CFLAGS) -o RUDP_Sender rudp_sender.c rudp_api.c
