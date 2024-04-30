@@ -229,12 +229,12 @@ int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
     timeout.tv_usec = 0;
     
     if (setsockopt (sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout) < 0){
-        error("setsockopt failed\n");
+        perror("setsockopt failed\n");
         close(sockfd);
         return -1;
     }
     if (setsockopt (sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0){
-        error("setsockopt failed\n");
+        perror("setsockopt failed\n");
         close(sockfd);
         return -1;
     }
@@ -316,11 +316,11 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     
     if (setsockopt (sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
                 sizeof timeout) < 0)
-        error("setsockopt failed\n");
+        perror("setsockopt failed\n");
 
     if (setsockopt (sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout,
                 sizeof timeout) < 0)
-        error("setsockopt failed\n");
+        perror("setsockopt failed\n");
 
     // Set up the receiver address structure
     memset(receiver_addr, 0, sizeof(*receiver_addr));
