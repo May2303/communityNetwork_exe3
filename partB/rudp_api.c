@@ -22,21 +22,26 @@ Returns:
 */
 
 uint16_t calculate_checksum(const uint8_t *data, int packet_length) {
-    unsigned short int *data_pointer = (unsigned short int *)data;
-    unsigned int total_sum = 0;
+    uint16_t *data_pointer = (uint16_t *)data;
+    uint32_t total_sum = 0;
+
     // Main summing loop
     while (packet_length > 1) {
-    total_sum += *data_pointer++;
-    packet_length -= 2;
+        total_sum += *data_pointer++;
+        packet_length -= 2;
     }
+
     // Add left-over byte, if any
     if (packet_length > 0)
-    total_sum += *((unsigned char *)data_pointer);
+        total_sum += *((uint8_t *)data_pointer);
+
     // Fold 32-bit sum to 16 bits
     while (total_sum >> 16)
-    total_sum = (total_sum & 0xFFFF) + (total_sum >> 16);
-    return (~((uint16_t)total_sum));
+        total_sum = (total_sum & 0xFFFF) + (total_sum >> 16);
+
+    return (uint16_t)(~total_sum);
 }
+
 
 // Function to generate a random byte
 uint8_t generate_random_byte() {
@@ -118,13 +123,14 @@ int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, so
 
     // Extract header fields from the received packet
     RUDP_Header header;
+    
     memcpy(&header, packet, Header_Size);
 
     // Calculate data length
     size_t data_length = packet_length - Header_Size;
 
     // Calculate checksum for the received data (without header)
-    uint8_t *data = packet + Header_Size -3;
+    uint8_t *data = packet + Header_Size;
     uint16_t checksum = calculate_checksum(data, data_length);
 
     // Compare checksum with the checksum field in the header
