@@ -63,9 +63,10 @@ int main(int argc, char *argv[]) {
     size_t file_size_bytes = FILE_SIZE;
     generate_random_file(file_name, file_size_bytes);
 
+    // Create RUDP socket
     int sockfd;
     struct sockaddr_in *receiver_addr = malloc(sizeof(struct sockaddr_in));
-    if((sockfd = rudp_socket(receiver_port, receiver_addr)) == -1){
+    if((sockfd = rudp_socket(receiver_ip, receiver_port, receiver_addr)) == -1){
         printf("Error creating socket\n");
         return -1;
     }
@@ -102,7 +103,7 @@ int main(int argc, char *argv[]) {
         //Extract data from file
         while ((bytes_received = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
 
-            // Send the data
+            // Send the data to the receiver
             if(rudp_send(bytes_received, buffer , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending file");
                 free(buffer);
@@ -113,25 +114,51 @@ int main(int argc, char *argv[]) {
             // Receive ACK for current packet
             int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
 
+            int retries = 0;
+            // If not received ACK proerly
             // Resend data if timeout + handle errors
-            while(errorcode!=0){
+            while(errorcode!=1 && retries < MAX_RETRIES){
+
+                //Flags for SYN or FIN received
+                if(errorcode == 2 || errorcode == 3 ){
+                    printf("Unexpected flag received. Closing connection...\n");
+                    perror("Error receiving ACK for sent packet");
+                    free(buffer);
+                    close(sockfd);
+                    return -1;
+                }
 
                 //Error receiving ACK
                 if(errorcode == -1){
-                    perror("Error receiving ACK");
+                    perror("Error receiving ACK for sent packet");
                     free(buffer);
                     close(sockfd);
                     return -1;
                 }
 
                 //Timeout handling - send data again
-                rudp_send((uint8_t)decision, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr));
+                if(rudp_send(bytes_received, buffer , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                perror("Error sending file");
+                free(buffer);
+                close(sockfd);
+                return -1;
+                }
 
-                // Receive ACK for current packet
+                // Receive ACK for current resent packet
                 errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+                retries++;
             }
             
             total_bytes_received += sizeof(buffer);
+        }
+
+        // Receive ACK message after all data has been sent
+        if(rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file) != 1){
+            printf("Unexpected flag received. Closing connection...\n");
+            perror("Error receiving ACK for sent file");
+            free(buffer);
+            close(sockfd);
+            return -1;
         }
 
         clock_t end_time = clock(); 
@@ -163,22 +190,39 @@ int main(int argc, char *argv[]) {
             // Receive ACK for decision
             int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
 
+            int retries = 0;
+            // If not received ACK proerly
             // Resend data if timeout + handle errors
-            while(errorcode!=0){
+            while(errorcode!=1 && retries < MAX_RETRIES){
 
-                //Error receiving ACK
-                if(errorcode == -1){
-                    perror("Error receiving ACK");
+                //Flags for SYN or FIN received
+                if(errorcode == 2 || errorcode == 3 ){
+                    printf("Unexpected flag received. Closing connection...\n");
+                    perror("Error receiving ACK for sent packet");
                     free(buffer);
                     close(sockfd);
                     return -1;
                 }
 
+                //Error receiving ACK
+                if(errorcode == -1){
+                    perror("Error receiving ACK for sent packet");
+                    free(buffer);
+                    close(sockfd);
+                    return -1;
+                }
+                
                 //Timeout handling - send data again
-                rudp_send((uint8_t)decision, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr));
+                if(rudp_send((uint8_t)decision, buffer , RUDP_FIN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                perror("Error sending file");
+                free(buffer);
+                close(sockfd);
+                return -1;
+                }
 
-                // Receive ACK for current packet
+                // Receive ACK for current resent packet
                 errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+                retries++;
             }
             break;
         }
@@ -197,22 +241,39 @@ int main(int argc, char *argv[]) {
             // Receive ACK for decision
             int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
 
+            int retries = 0;
+            // If not received ACK proerly
             // Resend data if timeout + handle errors
-            while(errorcode!=0){
+            while(errorcode!=1 && retries < MAX_RETRIES){
 
-                //Error receiving ACK
-                if(errorcode == -1){
-                    perror("Error receiving ACK");
+                //Flags for SYN or FIN received
+                if(errorcode == 2 || errorcode == 3 ){
+                    printf("Unexpected flag received. Closing connection...\n");
+                    perror("Error receiving ACK for sent packet");
                     free(buffer);
                     close(sockfd);
                     return -1;
                 }
 
+                //Error receiving ACK
+                if(errorcode == -1){
+                    perror("Error receiving ACK for sent packet");
+                    free(buffer);
+                    close(sockfd);
+                    return -1;
+                }
+                
                 //Timeout handling - send data again
-                rudp_send((uint8_t)decision, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr));
+                if(rudp_send((uint8_t)decision, buffer , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                perror("Error sending file");
+                free(buffer);
+                close(sockfd);
+                return -1;
+                }
 
-                // Receive ACK for current packet
+                // Receive ACK for current resent packet
                 errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+                retries++;
             }
     
             printf("Server accepted your decision.\n");
