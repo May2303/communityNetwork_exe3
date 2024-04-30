@@ -72,7 +72,7 @@ void rudp_close(int sockfd) {
 
 
 // Function to send data over RUDP connection with custom header
-int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd, struct sockaddr *dest_addr, socklen_t addrlen) {
+int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd, struct sockaddr_in *dest_addr, socklen_t addrlen) {
     // Construct the RUDP header
     RUDP_Header header;
     header.length = data_length; // Set the length field
