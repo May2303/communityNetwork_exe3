@@ -101,7 +101,16 @@ int main(int argc, char *argv[]) {
         uint8_t* bytes_received;
 
         //Extract data from file
-        while ((bytes_received = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
+        while (total_bytes_received < FILE_SIZE) {
+
+            // Read data from file
+            bytes_received = fread(buffer, 1, BUFFER_SIZE, file);
+            if (bytes_received == NULL) {
+                perror("Error reading file");
+                free(buffer);
+                close(sockfd);
+                return -1;
+            }
 
             // Send the data to the receiver
             if(rudp_send(bytes_received, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
@@ -112,7 +121,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Receive ACK for current packet
-            int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), file);
+            int errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
 
             int retries = 0;
             // If not received ACK proerly
@@ -149,7 +158,7 @@ int main(int argc, char *argv[]) {
                 retries++;
             }
             
-            total_bytes_received += sizeof(buffer);
+            total_bytes_received += BUFFER_SIZE;
         }
 
         // Receive ACK message after all data has been sent
