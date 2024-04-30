@@ -1,5 +1,5 @@
 // Receiver file
-#include <rudp_api.c>
+#include "rudp_api.c"
 #include <netinet/tcp.h> 
 #include <stdio.h>
 #include <unistd.h>
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 
     // Create RUDP socket
     int sockfd;
-    struct sockaddr_in *sender_addr = malloc(sizeof(struct sockaddr_in));
+    struct sockaddr_in const *sender_addr = malloc(sizeof(struct sockaddr_in));
     if((sockfd = rudp_socket(port, sender_addr)) == -1){
         printf("Error creating socket\n");
         return -1;
