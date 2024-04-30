@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
         while ((bytes_received = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
 
             // Send the data to the receiver
-            if(rudp_send(bytes_received, sizeof(uint8_t)*buffer , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+            if(rudp_send(bytes_received, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 //Timeout handling - send data again
-                if(rudp_send(bytes_received, sizeof(uint8_t)*buffer , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                if(rudp_send(bytes_received, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
