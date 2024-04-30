@@ -207,7 +207,7 @@ int rudp_recv(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, FILE *f
 
 // Function to set up an RUDP socket for the receiver (server) side and perform handshake
 // Gets empty addr and fills in the details of the sender.
-int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
+int rudp_socket_receiver(int port, struct sockaddr *sender_addr) {
     // Create a UDP socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {
@@ -246,7 +246,7 @@ int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
     sender_addr->sin_port = htons(port);
 
     // Bind the socket to the local address
-    if (bind(sockfd, (struct sockaddr *)sender_addr, sizeof(*sender_addr)) == -1) {
+    if (bind(sockfd, sender_addr, sizeof(*sender_addr)) == -1) {
         perror("bind");
         rudp_close(sockfd);
         return -1;
