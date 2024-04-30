@@ -122,7 +122,7 @@ int rudp_recv(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE
     }
 
     // Receive the packet over the network using recvfrom
-    int bytes_received = recvfrom(sockfd, packet, sizeof(RUDP_Header) + PACKET_SIZE, 0, src_addr, addrlen);
+    int bytes_received = recvfrom(sockfd, packet, sizeof(RUDP_Header) + PACKET_SIZE, 0, (struct sockaddr *)src_addr, addrlen);
     if (bytes_received == -1) {
         perror("recvfrom");
         free(packet);
