@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     // Create RUDP socket
     int sockfd;
     struct sockaddr_in *receiver_addr = malloc(sizeof(struct sockaddr_in));
-    if((sockfd = rudp_socket(receiver_ip, receiver_port, receiver_addr)) == -1){
+    if((sockfd = rudp_socket(receiver_port, receiver_addr)) == -1){
         printf("Error creating socket\n");
         return -1;
     }
