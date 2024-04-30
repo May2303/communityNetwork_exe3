@@ -21,29 +21,21 @@ Returns:
     The complement of sum
 */
 
-uint16_t calculate_checksum(const uint8_t *data, int packet_length) {
-    uint32_t sum = 0; // Initialize a 32-bit sum variable
-    
-    // Iterate over each 16-bit word of the data (assuming packet_length is even)
-    for (int i = 0; i < packet_length / 2; i++) {
-        // Combine two bytes into a 16-bit word and add it to the sum
-        sum += ((uint16_t)data[2*i] << 8) + data[2*i+1];
+unsigned short int calculate_checksum(void *data, unsigned int bytes) {
+    unsigned short int *data_pointer = (unsigned short int *)data;
+    unsigned int total_sum = 0;
+    // Main summing loop
+    while (bytes > 1) {
+    total_sum += *data_pointer++;
+    bytes -= 2;
     }
-
-    // If packet_length is odd, add the last byte as a padded 16-bit word
-    if (packet_length % 2) {
-        sum += ((uint16_t)data[packet_length - 1] << 8);
-    }
-
-    // Fold the carry bits into the sum
-    while (sum >> 16) {
-        sum = (sum & 0xFFFF) + (sum >> 16);
-    }
-
-    // Take the one's complement of the sum
-    uint16_t checksum = ~sum; // Calculate one's complement checksum
-
-    return checksum; // Return the calculated checksum
+    // Add left-over byte, if any
+    if (bytes > 0)
+    total_sum += *((unsigned char *)data_pointer);
+    // Fold 32-bit sum to 16 bits
+    while (total_sum >> 16)
+    total_sum = (total_sum & 0xFFFF) + (total_sum >> 16);
+    return (~((unsigned short int)total_sum));
 }
 
 // Function to generate a random byte
@@ -132,7 +124,7 @@ int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, so
     size_t data_length = packet_length - Header_Size;
 
     // Calculate checksum for the received data (without header)
-    uint8_t *data = packet + Header_Size +1;
+    uint8_t *data = packet + Header_Size;
     uint16_t checksum = calculate_checksum(data, data_length);
 
     // Compare checksum with the checksum field in the header
