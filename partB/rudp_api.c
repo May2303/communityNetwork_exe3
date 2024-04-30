@@ -309,8 +309,13 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     memset(receiver_addr, 0, sizeof(*receiver_addr));
     receiver_addr->sin_family = AF_INET;
     receiver_addr->sin_port = htons(dest_port);
-    if (inet_pton(AF_INET, dest_ip, &receiver_addr->sin_addr) != 1) {
+    int errorcode = inet_pton(AF_INET, dest_ip, &receiver_addr->sin_addr);
+    if (errorcode == -1) {
         perror("inet_pton");
+        close(sockfd);
+        return -1;
+    } else if(errorcode == 0) {
+        fprintf(stderr, "Invalid IP address\n");
         close(sockfd);
         return -1;
     }
