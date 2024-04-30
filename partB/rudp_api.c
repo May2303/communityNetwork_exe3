@@ -68,7 +68,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     header.checksum = calculate_checksum(data, data_length);
     
     // Allocate memory for the packet buffer
-    uint8_t *packet = (uint8_t *)malloc(sizeof(struct RUDP_Header) + data_length);
+    uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) + data_length);
     if (packet == NULL) {
         perror("Failed to allocate memory for packet buffer\n");
         return -1; // Return error code if memory allocation failed
@@ -83,7 +83,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     // Copy the data into the packet buffer after the header
     memcpy(packet + sizeof(RUDP_Header), data, data_length);
     
-    print("Packet size: %d\n", sizeof(RUDP_Header) + data_length);
+    printf("Packet size: %d\n", sizeof(RUDP_Header) + data_length);
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
