@@ -80,6 +80,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     // Copy the data into the packet buffer after the header
     memcpy(packet + sizeof(RUDP_Header), data, data_length);
     
+    printf("Sending %zd data " , data_length+sizeof(RUDP_Header));
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
