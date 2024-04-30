@@ -132,9 +132,6 @@ int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, so
     // Calculate checksum for the received data (without header)
     uint8_t *data = packet + Header_Size;
     uint16_t checksum = calculate_checksum(data, data_length);
-    uint8_t *data_pointer = &(uint8_t)10;
-    uint16_t checksum_received = calculate_checksum(data_pointer, 1);
-    printf("Checksum: %d\n", checksum_received);
 
     // Compare checksum with the checksum field in the header
     if (checksum != header.checksum) {
@@ -333,8 +330,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     printf("Sending handshake SYN message.\n");
 
     // Send the handshake message using RUDP
-    uint8_t *data_pointer = &(uint8_t)10;
-    if (rudp_send(data_pointer, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(struct sockaddr_in)) == -1) {
+    if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(struct sockaddr_in)) == -1) {
         perror("Error sending handshake message\n");
         close(sockfd);
         return -1;
