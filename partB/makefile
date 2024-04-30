@@ -1,24 +1,26 @@
-# Makefile for UDP project
+#Makefile for rudp Project
+CC = gcc
+CFLAGS = -Wall -Wextra -pedantic -std=c11
 
-all: rdup_receiver rdup_sender
+all: RUDP_Receiver RUDP_Sender
 
-rdup_receiver: rdup_receiver.c
-	gcc -o rdup_receiver rdup_receiver.c
+RUDP_Receiver: rudp_receiver.c rudp_api.c
+	$(CC) $(CFLAGS) -o RUDP_Receiver rudp_receiver.c rudp_api.c
 
-rdup_sender: rdup_sender.c
-	gcc -o rdup_sender rdup_sender.c
+RUDP_Sender: rudp_sender.c rudp_api.c
+	$(CC) $(CFLAGS) -o RUDP_Sender rudp_sender.c rudp_api.c
 
 clean:
-	rm -f *.o rdup_receiver rdup_sender
+	rm -f *.o RUDP_Receiver RUDP_Sender random_file.bin received_file.bin
 
 runs:
-	./rdup_receiver
+	./RUDP_Receiver
 
 runc:
-	./rdup_sender
+	./RUDP_Sender
 
 runs-strace:
-	strace -f ./rdup_receiver
+	strace -f ./RUDP_Receiver
 
 runc-strace:
-	strace -f ./rudp_client
+	strace -f ./RUDP_Sender
