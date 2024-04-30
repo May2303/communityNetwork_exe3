@@ -21,8 +21,8 @@ Returns:
     The complement of sum
 */
 
-unsigned short int calculate_checksum(void *data, unsigned int bytes) {
-    unsigned short int *data_pointer = (unsigned short int *)data;
+uint8_t calculate_checksum(void *data, unsigned int bytes) {
+    uint8_t *data_pointer = (uint8_t *)data;
     unsigned int total_sum = 0;
     // Main summing loop
     while (bytes > 1) {
@@ -35,7 +35,7 @@ unsigned short int calculate_checksum(void *data, unsigned int bytes) {
     // Fold 32-bit sum to 16 bits
     while (total_sum >> 16)
     total_sum = (total_sum & 0xFFFF) + (total_sum >> 16);
-    return (~((unsigned short int)total_sum));
+    return (~((uint8_t)total_sum));
 }
 
 // Function to generate a random byte
