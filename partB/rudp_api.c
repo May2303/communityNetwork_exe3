@@ -84,6 +84,8 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     memcpy(packet + sizeof(RUDP_Header), data, data_length);
     
     printf("Packet size: %d\n", sizeof(RUDP_Header) + data_length);
+    printf("Data length: %d\n", data_length);
+    printf("Header length: %d\n", sizeof(RUDP_Header));
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
