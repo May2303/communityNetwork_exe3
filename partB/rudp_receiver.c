@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
 
         while (total_bytes_received < FILE_SIZE) {
             // Receive the data
-            if((bytes_received = rudp_recv(sockfd, sender_addr, (socklen_t *)&addrlen, file) == -1)){
+            if((bytes_received = rudp_recv(BUFFER_SIZE,sockfd, sender_addr, (socklen_t *)&addrlen, file) == -1)){
                 // Deal with errors
                 perror("Error receiving file's content from client");
                 free(timeTaken);
@@ -208,7 +208,7 @@ int main(int argc, char *argv[]) {
 
         //Receive client's decision
         int decision_bytes;
-        decision_bytes = rudp_recv(sockfd, sender_addr, (socklen_t *)&addrlen, file);
+        decision_bytes = rudp_recv(sizeof(uint8_t),sockfd, sender_addr, (socklen_t *)&addrlen, file);
         if (decision_bytes == -1) {
             perror("Error receiving client response");
             free(timeTaken);

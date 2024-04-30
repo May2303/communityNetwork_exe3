@@ -45,7 +45,7 @@ void rudp_close(int sockfd);
 int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd, struct sockaddr_in *dest_addr, socklen_t addrlen);
 
 // Function to receive data over RUDP connection with custom header
-int rudp_recv(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file);
+int rudp_recv(size_t packet_length,int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file);
 
 // Function to set up an RUDP socket for the receiver (server) side and perform handshake
 // Gets empty addr and fills in the details of the sender.

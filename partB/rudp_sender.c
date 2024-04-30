@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Receive ACK for current packet
-            int errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
 
             int retries = 0;
             // If not received ACK proerly
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Receive ACK for current resent packet
-                errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
                 retries++;
             }
             
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Receive ACK message after all data has been sent
-        if(rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file) != 1){
+        if(rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file) != 1){
             printf("Unexpected flag received. Closing connection...\n");
             perror("Error receiving ACK for sent file");
             free(buffer);
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Receive ACK for decision
-            int errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
 
             int retries = 0;
             // If not received ACK proerly
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Receive ACK for current resent packet
-                errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
                 retries++;
             }
             break;
@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
             printf("Waiting for the server to be ready...\n");
 
             // Receive ACK for decision
-            int errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
 
             int retries = 0;
             // If not received ACK proerly
@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Receive ACK for current resent packet
-                errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
                 retries++;
             }
     

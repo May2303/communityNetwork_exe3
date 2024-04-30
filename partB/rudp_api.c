@@ -83,9 +83,6 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     // Copy the data into the packet buffer after the header
     memcpy(packet + sizeof(RUDP_Header), data, data_length);
     
-    printf("Packet size: %d\n", sizeof(RUDP_Header) -1 + data_length);
-    printf("Data length: %d\n", data_length);
-    printf("Header length: %d\n", sizeof(RUDP_Header) -1);
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) -1 + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
@@ -102,9 +99,9 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
 
 
 // Function to receive data over RUDP connection with custom header
-int rudp_recv(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file) {
+int rudp_recv(size_t packet_legnth, int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file) {
     // Allocate memory for the packet buffer
-    uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) -1 + PACKET_SIZE);
+    uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) -1 + packet_legnth);
     if (packet == NULL) {
         return -1; // Return error code if memory allocation failed
     }
@@ -115,7 +112,7 @@ int rudp_recv(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE
     }
 
     // Receive the packet over the network using recvfrom
-    int bytes_received = recvfrom(sockfd, packet, sizeof(RUDP_Header) -1 + PACKET_SIZE, 0, (struct sockaddr *)src_addr, addrlen);
+    int bytes_received = recvfrom(sockfd, packet, sizeof(RUDP_Header) -1 + packet_legnth, 0, (struct sockaddr *)src_addr, addrlen);
     if (bytes_received == -1) {
         perror("recvfrom");
         free(packet);
@@ -132,7 +129,7 @@ int rudp_recv(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE
     memcpy(&header, packet, sizeof(RUDP_Header) -1);
 
     // Calculate data length
-    int data_length = bytes_received - sizeof(RUDP_Header) -1;
+    size_t data_length = bytes_received - sizeof(RUDP_Header) -1;
 
     // Calculate checksum for the received data (without header)
     uint16_t checksum = calculate_checksum(packet + sizeof(RUDP_Header) -1, data_length);
@@ -250,7 +247,7 @@ int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
     uint8_t handshake_byte = generate_random_byte();
 
     // Receive the handshake-SYN message using RUDP
-    int errorcode = rudp_recv(sockfd, sender_addr, &addrlen, NULL);
+    int errorcode = rudp_recv(sizeof(uint8_t),sockfd, sender_addr, &addrlen, NULL);
     if(errorcode == -1){
         perror("Error receiving handshake message\n");
         rudp_close(sockfd);
@@ -341,7 +338,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     }
 
     // Receive the handshake-ACK message using RUDP
-    errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), NULL);
+    errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), NULL);
     
     int retries = 0;
 
@@ -368,7 +365,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
         }
         // Receive the handshake-ACK message using RUDP
         int addrln = sizeof(receiver_addr);
-        errorcode = rudp_recv(sockfd, receiver_addr, (socklen_t *)&addrln, NULL);
+        errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)&addrln, NULL);
         retries++;
     }
     
