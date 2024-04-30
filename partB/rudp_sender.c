@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     
 
     char decision = 'n';
-    char *buffer = (char *)malloc(BUFFER_SIZE);
+    uint8_t *buffer = (uint8_t *)malloc(BUFFER_SIZE);
     if (buffer == NULL) {
             printf("Failed to create buffer \n");
             free(buffer);
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
         clock_t start_time = clock();
 
         size_t total_bytes_received = 0;
-        uint8_t* bytes_received;
+        size_t bytes_received;
 
         //Extract data from file
         while (total_bytes_received < FILE_SIZE) {
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Send the data to the receiver
-            if(rudp_send(bytes_received, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+            if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 //Timeout handling - send data again
-                if(rudp_send(bytes_received, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
                 retries++;
             }
             
-            total_bytes_received += BUFFER_SIZE;
+            total_bytes_received += bytes_received;
         }
 
         // Receive ACK message after all data has been sent
