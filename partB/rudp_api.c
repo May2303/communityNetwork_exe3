@@ -70,6 +70,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     // Allocate memory for the packet buffer
     uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) + data_length);
     if (packet == NULL) {
+        perror("Failed to allocate memory for packet buffer\n");
         return -1; // Return error code if memory allocation failed
     }
     
@@ -86,6 +87,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     free(packet);
     
     if (bytes_sent == -1) {
+        perror("Failed to send packet\n");
         return -1; // Return error code if sending packet failed
     }
     
