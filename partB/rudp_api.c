@@ -68,19 +68,22 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     header.checksum = calculate_checksum(data, data_length);
     
     // Allocate memory for the packet buffer
-    uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) + data_length);
+    uint8_t *packet = (uint8_t *)malloc(sizeof(struct RUDP_Header) + data_length);
     if (packet == NULL) {
         perror("Failed to allocate memory for packet buffer\n");
         return -1; // Return error code if memory allocation failed
     }
     
     // Copy the header into the packet buffer
-    memcpy(packet, &header, sizeof(RUDP_Header));
+    // Serialize the header into the packet buffer
+    memcpy(packet, &(header.length), sizeof(uint16_t)); // Copy length
+    memcpy(packet + sizeof(uint16_t), &(header.checksum), sizeof(uint16_t)); // Copy checksum
+    memcpy(packet + 2*sizeof(uint16_t), &(header.flag), sizeof(uint8_t)); // Copy flag
 
     // Copy the data into the packet buffer after the header
     memcpy(packet + sizeof(RUDP_Header), data, data_length);
     
-    printf("Sending %zd data " , data_length+sizeof(RUDP_Header));
+    print("Packet size: %d\n", sizeof(RUDP_Header) + data_length);
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
@@ -327,7 +330,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     uint8_t handshake_byte = generate_random_byte();
 
     printf("Sending handshake SYN message.\n");
-
+    printf("Handshake byte: %u\n", handshake_byte);
     // Send the handshake message using RUDP
     if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1) {
         perror("Error sending handshake message\n");
