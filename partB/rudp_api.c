@@ -25,12 +25,12 @@ uint16_t calculate_checksum(const uint8_t *data, int packet_length) {
     unsigned short int *data_pointer = (unsigned short int *)data;
     unsigned int total_sum = 0;
     // Main summing loop
-    while (bytes > 1) {
+    while (packet_length > 1) {
     total_sum += *data_pointer++;
-    bytes -= 2;
+    packet_length -= 2;
     }
     // Add left-over byte, if any
-    if (bytes > 0)
+    if (packet_length > 0)
     total_sum += *((unsigned char *)data_pointer);
     // Fold 32-bit sum to 16 bits
     while (total_sum >> 16)
