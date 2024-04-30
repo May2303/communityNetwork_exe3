@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
             }
         
             //Send acknowledgment for the received packet to sender
-            if (rudp_send((uint8_t)'A', sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
+            if (rudp_send((uint8_t)RUDP_ACK, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
                 perror("Error writing to file");
                 free(timeTaken);
                 free(transferSpeed);
