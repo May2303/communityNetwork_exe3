@@ -11,21 +11,6 @@
 #include <errno.h>
 #include <stdint.h>
 
-//Flags:
-#define RUDP_DATA 0x00 // Standard data transfering packet flag
-#define RUDP_SYN 0x01 // Sync flag
-#define RUDP_ACK 0x02 // Acknowledgement flag
-#define RUDP_FIN 0x04 // Ending program/connection flag
-
-
-#define PACKET_SIZE 1024 // Packet size
-#define MAX_RETRIES 5 // Maximum number of retries for sending a packet
-typedef struct {
-    uint16_t length;
-    uint16_t checksum;
-    uint8_t flag;
-} RUDP_Header;
-
 /* 
 Function to calculate the one's complement checksum of binary data
 Parameters:
