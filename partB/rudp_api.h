@@ -16,6 +16,7 @@
 #define RUDP_ACK 0x02 // Acknowledgement flag
 #define RUDP_FIN 0x04 // Ending program/connection flag
 
+#define Header_Size 5 // Size of the header
 #define PACKET_SIZE 1024 // Packet size
 #define MAX_RETRIES 5 // Maximum number of retries for sending a packet
 typedef struct {

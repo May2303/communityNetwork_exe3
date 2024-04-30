@@ -68,7 +68,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     header.checksum = calculate_checksum(data, data_length);
     
     // Allocate memory for the packet buffer
-    uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) -1 + data_length);
+    uint8_t *packet = (uint8_t *)malloc(Header_Size + data_length);
     if (packet == NULL) {
         perror("Failed to allocate memory for packet buffer\n");
         return -1; // Return error code if memory allocation failed
@@ -84,7 +84,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     memcpy(packet + sizeof(RUDP_Header), data, data_length);
     
     // Send the packet over the network using sendto
-    int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) -1 + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
+    int bytes_sent = sendto(sockfd, packet, Header_Size + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
     // Free the memory allocated for the packet buffer
     free(packet);
@@ -99,9 +99,9 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
 
 
 // Function to receive data over RUDP connection with custom header
-int rudp_recv(size_t packet_legnth, int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file) {
+int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file) {
     // Allocate memory for the packet buffer
-    uint8_t *packet = (uint8_t *)malloc(sizeof(RUDP_Header) -1 + packet_legnth);
+    uint8_t *packet = (uint8_t *)malloc(Header_Size + packet_length);
     if (packet == NULL) {
         return -1; // Return error code if memory allocation failed
     }
@@ -112,7 +112,7 @@ int rudp_recv(size_t packet_legnth, int sockfd, struct sockaddr_in *src_addr, so
     }
 
     // Receive the packet over the network using recvfrom
-    int bytes_received = recvfrom(sockfd, packet, sizeof(RUDP_Header) -1 + packet_legnth, 0, (struct sockaddr *)src_addr, addrlen);
+    int bytes_received = recvfrom(sockfd, packet, Header_Size + packet_length, 0, (struct sockaddr *)src_addr, addrlen);
     if (bytes_received == -1) {
         perror("recvfrom");
         free(packet);
@@ -126,13 +126,13 @@ int rudp_recv(size_t packet_legnth, int sockfd, struct sockaddr_in *src_addr, so
 
     // Extract header fields from the received packet
     RUDP_Header header;
-    memcpy(&header, packet, sizeof(RUDP_Header) -1);
+    memcpy(&header, packet, Header_Size);
 
     // Calculate data length
-    size_t data_length = bytes_received - sizeof(RUDP_Header) -1;
+    size_t data_length = packet_length - Header_Size;
 
     // Calculate checksum for the received data (without header)
-    uint16_t checksum = calculate_checksum(packet + sizeof(RUDP_Header) -1, data_length);
+    uint16_t checksum = calculate_checksum(packet + Header_Size, data_length);
 
     // Compare checksum with the checksum field in the header
     if (checksum != header.checksum) {
