@@ -21,9 +21,9 @@ Returns:
     The complement of sum
 */
 
-uint16_t calculate_checksum(uint8_t *data, size_t bytes) {
-    uint16_t *data_pointer = (uint16_t *)data;
-    uint8_t total_sum = 0;
+uint16_t calculate_checksum(const uint8_t *data, int packet_length) {
+    unsigned short int *data_pointer = (unsigned short int *)data;
+    unsigned int total_sum = 0;
     // Main summing loop
     while (bytes > 1) {
     total_sum += *data_pointer++;
