@@ -65,17 +65,11 @@ uint8_t generate_random_byte() {
     return (uint8_t)rand() % 256;
 }
 
-// Function to handle timeouts during data transmission
-int handle_timeout(int sockfd) {
-    // Implement timeout handling logic
-    // ...
+//Close the connection
+void rudp_close(int sockfd) {
+    close(sockfd);
 }
 
-// Function to send a packet with retries
-int send_with_retries(int sockfd, const char *receiver_ip, int port, const char *data, int length) {
-    // Implement sending logic with retries and timeout handling
-    // ...
-}
 
 // Function to send data over RUDP connection with custom header
 int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd, struct sockaddr *dest_addr, socklen_t addrlen) {
@@ -389,13 +383,5 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     return sockfd;
 }
 
-
-
-
-
-//TODO: Check if needs any addition
-void rudp_close(int sockfd) {
-    close(sockfd);
-}
 
 
