@@ -94,7 +94,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     memcpy(packet + sizeof(RUDP_Header), data, data_length);
     
     // Send the packet over the network using sendto
-    int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) + data_length, 0, dest_addr, addrlen);
+    int bytes_sent = sendto(sockfd, packet, sizeof(RUDP_Header) + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
     // Free the memory allocated for the packet buffer
     free(packet);
@@ -343,7 +343,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     }
 
     // Receive the handshake-ACK message using RUDP
-    int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(receiver_addr), NULL);
+    int errorcode = rudp_recv(sockfd, receiver_addr, sizeof(*receiver_addr), NULL);
     
     int retries = 0;
 
