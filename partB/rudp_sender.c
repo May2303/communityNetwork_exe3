@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
 
         if (decision == 'n'){
             // Send the decision to the receiver
-            if(rudp_send((uint8_t)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+            if(rudp_send((uint8_t *)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending decision");
                 free(buffer);
                 close(sockfd);
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
                 }
                 
                 //Timeout handling - send data again
-                if(rudp_send((uint8_t)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                if(rudp_send((uint8_t *)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
         else if (decision == 'y'){
 
             // Send the decision to the receiver
-            if(rudp_send((uint8_t)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+            if(rudp_send((uint8_t *)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending decision");
                 free(buffer);
                 close(sockfd);
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
                 }
                 
                 //Timeout handling - send data again
-                if(rudp_send((uint8_t)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                if(rudp_send((uint8_t *)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
