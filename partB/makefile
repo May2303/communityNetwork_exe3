@@ -22,5 +22,10 @@ runc:
 runs-strace:
 	strace -f ./RUDP_Receiver
 
+testc:
+	./RUDP_Sender -ip localhost -p 12345
+
+tests:
+	./RUDP_Receiver -p 12345
 runc-strace:
 	strace -f ./RUDP_Sender
