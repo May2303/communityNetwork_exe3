@@ -334,7 +334,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     printf("Sending handshake SYN message.\n");
     printf("Handshake byte: %u\n", handshake_byte);
     // Send the handshake message using RUDP
-    if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1) {
+    if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(struct sockaddr_in)) == -1) {
         perror("Error sending handshake message\n");
         close(sockfd);
         return -1;
