@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     
     // Convert the client's IP address from network format to presentation format
     char client_ip[INET_ADDRSTRLEN];
-    if (inet_ntop(AF_INET, &sender_addr.sin_addr, client_ip, INET_ADDRSTRLEN) == NULL) {
+    if (inet_ntop(AF_INET, &sender_addr->sin_addr, client_ip, INET_ADDRSTRLEN) == NULL) {
         perror("inet_ntop() failed");
         close(sockfd);
         return -1;
