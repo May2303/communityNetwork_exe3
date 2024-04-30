@@ -273,7 +273,7 @@ int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
     printf("Sending handshake ACK message.\n");
 
     // Send the handshake message using RUDP
-    if (rudp_send(handshake_byte, sizeof(handshake_byte), RUDP_ACK, sockfd, sender_addr, addrlen) == -1) {
+    if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_ACK, sockfd, sender_addr, addrlen) == -1) {
         perror("Error sending handshake message\n");
         rudp_close(sockfd);
         return -1;
@@ -336,7 +336,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     printf("Sending handshake SYN message.\n");
 
     // Send the handshake message using RUDP
-    if (rudp_send(handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1) {
+    if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1) {
         perror("Error sending handshake message\n");
         close(sockfd);
         return -1;
@@ -363,7 +363,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
         }
 
         // Resend the handshake message using RUDP - deal with timeout
-        if (rudp_send(handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1) {
+        if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1) {
             perror("Error sending handshake message\n");
             close(sockfd);
             return -1;
