@@ -116,11 +116,9 @@ int rudp_recv(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE
         return -1; // Return error code if memory allocation failed
     }
 
-    // If src_addr is NULL, allocate memory for it and set addrlen accordingly
-    struct sockaddr_in sender_addr; // Temporary variable to hold sender's address
+    // Check if the source address is NULL
     if (src_addr == NULL) {
-        src_addr = (struct sockaddr *)&sender_addr;
-        *addrlen = sizeof(sender_addr);
+        perror("src_addr is NULL\n");
     }
 
     // Receive the packet over the network using recvfrom
