@@ -32,7 +32,7 @@ runs-strace:
 	strace -f ./RUDP_Receiver
 
 testc:
-	./RUDP_Sender -ip localhost -p 12345
+	./RUDP_Sender -ip 127.0.0.1 -p 12345
 
 tests:
 	./RUDP_Receiver -p 12345
