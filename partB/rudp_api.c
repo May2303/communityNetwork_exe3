@@ -300,7 +300,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     //Set timeout for the socket
     struct timeval timeout;      
     timeout.tv_sec = 0;
-    timeout.tv_usec = 500000;
+    timeout.tv_usec = 10000;
     
     if (setsockopt (sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
                 sizeof timeout) < 0)
