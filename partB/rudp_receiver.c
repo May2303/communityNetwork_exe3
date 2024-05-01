@@ -77,6 +77,7 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in *sender_addr = malloc(sizeof(struct sockaddr_in));
     if((sockfd = rudp_socket_receiver(port, sender_addr)) == -1){
         printf("Error creating socket\n");
+        free(sender_addr);
         return -1;
     }
 
@@ -85,6 +86,7 @@ int main(int argc, char *argv[]) {
     char client_ip[INET_ADDRSTRLEN];
     if (inet_ntop(AF_INET, &sender_addr->sin_addr, client_ip, INET_ADDRSTRLEN) == NULL) {
         perror("inet_ntop() failed");
+        free(sender_addr);
         close(sockfd);
         return -1;
     }
@@ -97,6 +99,7 @@ int main(int argc, char *argv[]) {
 
     if (buffer == NULL) {
         printf("Error allocating memory for buffer\n");
+        free(sender_addr);
         close(sockfd);
         return -1;
     }
@@ -106,6 +109,7 @@ int main(int argc, char *argv[]) {
     if (timeTaken == NULL) {
         printf("Error allocating memory for timeTaken\n");
         free(buffer);
+        free(sender_addr);
         close(sockfd);
         return -1;
     }
@@ -116,6 +120,7 @@ int main(int argc, char *argv[]) {
         printf("Error allocating memory for transferSpeed\n");
         free(timeTaken);
         free(buffer);
+        free(sender_addr);
         close(sockfd);
         return -1;
     }
@@ -136,6 +141,7 @@ int main(int argc, char *argv[]) {
             free(timeTaken);
             free(transferSpeed);
             free(buffer);
+            free(sender_addr);
             close(sockfd);
             return -1;
         }
@@ -154,6 +160,7 @@ int main(int argc, char *argv[]) {
                 free(timeTaken);
                 free(transferSpeed);
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             // Deal with timeouts
@@ -164,6 +171,7 @@ int main(int argc, char *argv[]) {
                 free(timeTaken);
                 free(transferSpeed);
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }else if(bytes_received != 0){
@@ -172,6 +180,7 @@ int main(int argc, char *argv[]) {
                 free(timeTaken);
                 free(transferSpeed);
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }
@@ -183,6 +192,7 @@ int main(int argc, char *argv[]) {
                 free(transferSpeed);
                 free(buffer);
                 fclose(file);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }
@@ -196,6 +206,7 @@ int main(int argc, char *argv[]) {
             free(transferSpeed);
             free(buffer);
             fclose(file);
+            free(sender_addr);
             close(sockfd);
             return -1;
         }
@@ -218,6 +229,7 @@ int main(int argc, char *argv[]) {
             free(timeTaken);
             free(transferSpeed);
             free(buffer);
+            free(sender_addr);
             close(sockfd);
             return -1;
         }else if(decision_bytes == ETIMEDOUT){
@@ -226,6 +238,7 @@ int main(int argc, char *argv[]) {
             free(timeTaken);
             free(transferSpeed);
             free(buffer);
+            free(sender_addr);
             close(sockfd);
             return 0;
         }
@@ -238,6 +251,7 @@ int main(int argc, char *argv[]) {
                 free(timeTaken);
                 free(transferSpeed);
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }
@@ -249,6 +263,7 @@ int main(int argc, char *argv[]) {
                 free(timeTaken);
                 free(transferSpeed);
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }
@@ -256,6 +271,7 @@ int main(int argc, char *argv[]) {
             // Close the RUDP connection
             free(buffer);
             close(sockfd);
+            free(sender_addr);
             print_statistics(timeTaken,transferSpeed, iteration);
             free(timeTaken);
             free(transferSpeed);
@@ -265,6 +281,7 @@ int main(int argc, char *argv[]) {
             printf("Unexpected response received. Closing connection...\n");
             free(buffer);
             close(sockfd);
+            free(sender_addr);
             print_statistics(timeTaken,transferSpeed, iteration);
             free(timeTaken);
             free(transferSpeed);
@@ -279,6 +296,7 @@ int main(int argc, char *argv[]) {
     free(timeTaken);
     free(transferSpeed);
     free(buffer);
+    free(sender_addr);
     close(sockfd);
     
     return 0;

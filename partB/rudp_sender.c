@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in *receiver_addr = malloc(sizeof(struct sockaddr_in));
     if((sockfd = rudp_socket_sender(receiver_ip ,receiver_port, receiver_addr)) == -1){
         printf("Error creating socket\n");
+        free(sender_addr);
         return -1;
     }
 
@@ -83,6 +84,7 @@ int main(int argc, char *argv[]) {
             printf("Failed to create buffer \n");
             free(buffer);
             close(sockfd);
+            free(sender_addr);
             return -1;
     }
     while (1) {
@@ -96,6 +98,7 @@ int main(int argc, char *argv[]) {
         if (file == NULL) {
             perror("Error opening file for reading");
             free(buffer);
+            free(sender_addr);
             close(sockfd);
             return -1;
         }
@@ -113,6 +116,7 @@ int main(int argc, char *argv[]) {
             if (bytes_received < BUFFER_SIZE) {
                 perror("Error reading file");
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }
@@ -121,6 +125,7 @@ int main(int argc, char *argv[]) {
             if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }
@@ -138,6 +143,7 @@ int main(int argc, char *argv[]) {
                     printf("Unexpected flag received. Closing connection...\n");
                     perror("Error receiving ACK for sent packet");
                     free(buffer);
+                    free(sender_addr);
                     close(sockfd);
                     return -1;
                 }
@@ -146,6 +152,7 @@ int main(int argc, char *argv[]) {
                 if(errorcode == -1){
                     perror("Error receiving ACK for sent packet");
                     free(buffer);
+                    free(sender_addr);
                     close(sockfd);
                     return -1;
                 }
@@ -154,6 +161,7 @@ int main(int argc, char *argv[]) {
                 if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
                 }
@@ -171,6 +179,7 @@ int main(int argc, char *argv[]) {
             printf("Unexpected flag received. Closing connection...\n");
             perror("Error receiving ACK for sent file");
             free(buffer);
+            free(sender_addr);
             close(sockfd);
             return -1;
         }
@@ -197,6 +206,7 @@ int main(int argc, char *argv[]) {
             if(rudp_send((uint8_t *)&fin, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending decision");
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }
@@ -214,6 +224,7 @@ int main(int argc, char *argv[]) {
                     printf("Unexpected flag received. Closing connection...\n");
                     perror("Error receiving ACK for sent packet");
                     free(buffer);
+                    free(sender_addr);
                     close(sockfd);
                     return -1;
                 }
@@ -222,6 +233,7 @@ int main(int argc, char *argv[]) {
                 if(errorcode == -1){
                     perror("Error receiving ACK for sent packet");
                     free(buffer);
+                    free(sender_addr);
                     close(sockfd);
                     return -1;
                 }
@@ -230,6 +242,7 @@ int main(int argc, char *argv[]) {
                 if(rudp_send((uint8_t *)&fin, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
                 }
@@ -246,6 +259,7 @@ int main(int argc, char *argv[]) {
             if(rudp_send((uint8_t *)&syn, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending decision");
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
             }
@@ -265,6 +279,7 @@ int main(int argc, char *argv[]) {
                     printf("Unexpected flag received. Closing connection...\n");
                     perror("Error receiving ACK for sent packet");
                     free(buffer);
+                    free(sender_addr);
                     close(sockfd);
                     return -1;
                 }
@@ -273,6 +288,7 @@ int main(int argc, char *argv[]) {
                 if(errorcode == -1){
                     perror("Error receiving ACK for sent packet");
                     free(buffer);
+                    free(sender_addr);
                     close(sockfd);
                     return -1;
                 }
@@ -281,6 +297,7 @@ int main(int argc, char *argv[]) {
                 if(rudp_send((uint8_t *)&syn, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
+                free(sender_addr);
                 close(sockfd);
                 return -1;
                 }
@@ -298,6 +315,7 @@ int main(int argc, char *argv[]) {
     printf("Closing connection...\n");
     // Close the RUDP connection
     free(buffer);
+    free(sender_addr);
     close(sockfd);
 
     return 0;
