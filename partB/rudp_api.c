@@ -374,7 +374,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     }
     
 
-    printf("Handshake SYN message received.\n");
+    printf("Handshake ACK message received.\n");
     printf("Handshake completed successfully.\n");
 
     // Return the socket descriptor

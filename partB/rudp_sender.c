@@ -157,6 +157,7 @@ int main(int argc, char *argv[]) {
                     return -1;
                 }
 
+                printf("Timeout detected - resending current packet\n");
                 //Timeout handling - send data again
                 if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
@@ -184,6 +185,7 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
+        printf("ACK message received - whole file has been sent.\n");
         clock_t end_time = clock(); 
 
         fclose(file);
@@ -214,6 +216,8 @@ int main(int argc, char *argv[]) {
             // Receive ACK for decision
             int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
 
+            
+
             int retries = 0;
             // If not received ACK proerly
             // Resend data if timeout + handle errors
@@ -238,6 +242,7 @@ int main(int argc, char *argv[]) {
                     return -1;
                 }
                 
+                printf("Timeout detected - resending your FIN message\n");
                 //Timeout handling - send data again
                 if(rudp_send((uint8_t *)&fin, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
@@ -251,6 +256,8 @@ int main(int argc, char *argv[]) {
                 errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
                 retries++;
             }
+
+            printf("Received ACK message for your FIN message.\n");
             break;
         }
         else if (decision == 'y'){
@@ -293,6 +300,7 @@ int main(int argc, char *argv[]) {
                     return -1;
                 }
                 
+                printf("Timeout detected - resending your SYN message\n");
                 //Timeout handling - send data again
                 if(rudp_send((uint8_t *)&syn, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
@@ -306,7 +314,8 @@ int main(int argc, char *argv[]) {
                 errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
                 retries++;
             }
-    
+
+            printf("Received ACK message for your SYN message.\n");
             printf("Server accepted your decision.\n");
         }
 

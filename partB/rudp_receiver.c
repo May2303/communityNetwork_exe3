@@ -211,6 +211,8 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
+        printf("Sending ACK message - whole file received.\n");
+
         end_time = clock();
 
         printf("Received %zu bytes of data from %s:%d.\n", total_bytes_received, client_ip, port);
