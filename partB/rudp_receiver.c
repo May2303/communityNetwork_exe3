@@ -69,6 +69,7 @@ int main(int argc, char *argv[]) {
     int port = atoi(argv[2]);
 
     uint8_t ack = RUDP_ACK;
+    uint8_t syn = RUDP_SYN;
 
     printf("Waiting for incoming RUDP connections...\n");
 
@@ -174,6 +175,20 @@ int main(int argc, char *argv[]) {
                 free(sender_addr);
                 close(sockfd);
                 return -1;
+                //Corrupted packet handling
+            }else if(bytes_received == -2){
+                printf("Requesting the sender to resend the packet due to corrupted data\n");
+                if (rudp_send((const uint8_t *)&syn, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
+                    perror("Error writing to file");
+                    free(timeTaken);
+                    free(transferSpeed);
+                    free(buffer);
+                    fclose(file);
+                    free(sender_addr);
+                    close(sockfd);
+                    return -1;
+                }
+                //Go back one iteration
             }else if(bytes_received != 0){
                 printf("Unexpected flag received. Closing connection...\n");
                 perror("Error receiving file's content from client");
@@ -185,18 +200,19 @@ int main(int argc, char *argv[]) {
                 return -1;
             }
             //Send acknowledgment for the received packet to sender
-            
-            if (rudp_send((const uint8_t *)&ack, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
-                perror("Error writing to file");
-                free(timeTaken);
-                free(transferSpeed);
-                free(buffer);
-                fclose(file);
-                free(sender_addr);
-                close(sockfd);
-                return -1;
+            if(bytes_received != -2){
+                if (rudp_send((const uint8_t *)&ack, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
+                    perror("Error writing to file");
+                    free(timeTaken);
+                    free(transferSpeed);
+                    free(buffer);
+                    fclose(file);
+                    free(sender_addr);
+                    close(sockfd);
+                    return -1;
+                }
+                total_bytes_received += BUFFER_SIZE;
             }
-            total_bytes_received += BUFFER_SIZE;
         }
         
         //Send acknowledgment for the received file to sender

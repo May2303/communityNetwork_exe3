@@ -137,7 +137,7 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
     if (checksum != header.checksum) {
         printf("Checksum mismatch: header checksum = %d, actual checksum = %d\n", header.checksum, checksum);
         free(packet);
-        return -1; // Return error code if checksum verification failed
+        return -2; // Return error code if checksum verification failed
     }
 
     // Compare length with the length field in the header
