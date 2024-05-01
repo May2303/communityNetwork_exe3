@@ -24,8 +24,7 @@ Returns:
 uint16_t calculate_checksum(const uint8_t *data, int data_length) {
     uint16_t *data_pointer = (uint16_t *)data;
     uint32_t total_sum = 0;
-    printf("Packet length: %d\n", data_length);
-    printf("Data value: %hhu\n", *data);
+
     // Main summing loop
     while (data_length > 1) {
         total_sum += *data_pointer++;
@@ -35,11 +34,11 @@ uint16_t calculate_checksum(const uint8_t *data, int data_length) {
     // Add left-over byte, if any
     if (data_length > 0)
         total_sum += *((uint8_t *)data_pointer);
-    printf("Total sum: %d\n", total_sum);
+  
     // Fold 32-bit sum to 16 bits
     while (total_sum >> 16)
         total_sum = (total_sum & 0xFFFF) + (total_sum >> 16);
-    printf("Folded sum: %d\n", total_sum);
+
     return (uint16_t)(~total_sum);
 }
 
@@ -64,7 +63,6 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     
     // Calculate checksum for the data (you need to implement this function)
     header.checksum = calculate_checksum(data, data_length);
-    printf("Checksum: %d\n", header.checksum);
     
     // Allocate memory for the packet buffer
     uint8_t *packet = (uint8_t *)malloc(Header_Size + data_length);
@@ -82,10 +80,6 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     // Copy the data into the packet buffer after the header
     memcpy(packet + Header_Size, data, data_length);
     
-    printf("Data in packet: %hhu\n", *(packet+Header_Size));
-    
-    memcpy(&header, packet, Header_Size);
-    printf("Checksum in packet: %d\n", header.checksum);
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, Header_Size + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
@@ -126,8 +120,7 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
         printf("Timeout\n");
         return ETIMEDOUT;
     }
-    for(int i=0; i<5; i++)
-        printf("Data: %hhu\n", *(packet+i));
+   
     // Extract header fields from the received packet
     RUDP_Header header;
     
