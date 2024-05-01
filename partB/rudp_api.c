@@ -324,20 +324,24 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
         return -1;
     }
 
+    socklen_t addrlen = sizeof(*receiver_addr);
+
+    
+
     // Generate a random byte for the handshake message
     uint8_t handshake_byte = generate_random_byte();
 
     printf("Sending handshake SYN message.\n");
 
     // Send the handshake message using RUDP
-    if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(struct sockaddr_in)) == -1) {
+    if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, addrlen) == -1) {
         perror("Error sending handshake message\n");
         close(sockfd);
         return -1;
     }
 
     // Receive the handshake-ACK message using RUDP
-    errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), NULL);
+    errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, NULL);
     
     int retries = 0;
 
@@ -357,14 +361,14 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
         }
 
         // Resend the handshake message using RUDP - deal with timeout
-        if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1) {
+        if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_SYN, sockfd, receiver_addr, addrlen) == -1) {
             perror("Error sending handshake message\n");
             close(sockfd);
             return -1;
         }
         // Receive the handshake-ACK message using RUDP
-        int addrln = sizeof(receiver_addr);
-        errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)&addrln, NULL);
+        
+        errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, NULL);
         retries++;
     }
     
