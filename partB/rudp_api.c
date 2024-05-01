@@ -24,7 +24,7 @@ Returns:
 uint16_t calculate_checksum(const uint8_t *data, int packet_length) {
     uint16_t *data_pointer = (uint16_t *)data;
     uint32_t total_sum = 0;
-
+    printf("Packet length: %d\n", packet_length);
     // Main summing loop
     while (packet_length > 1) {
         total_sum += *data_pointer++;
@@ -34,11 +34,11 @@ uint16_t calculate_checksum(const uint8_t *data, int packet_length) {
     // Add left-over byte, if any
     if (packet_length > 0)
         total_sum += *((uint8_t *)data_pointer);
-
+    printf("Total sum: %d\n", total_sum);
     // Fold 32-bit sum to 16 bits
     while (total_sum >> 16)
         total_sum = (total_sum & 0xFFFF) + (total_sum >> 16);
-
+    printf("Folded sum: %d\n", total_sum);
     return (uint16_t)(~total_sum);
 }
 
@@ -78,7 +78,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     memcpy(packet + 2*sizeof(uint16_t), &(header.flag), sizeof(uint8_t)); // Copy flag
 
     // Copy the data into the packet buffer after the header
-    memcpy(packet + sizeof(RUDP_Header), data, data_length);
+    memcpy(packet + Header_Size , data, data_length);
     
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, Header_Size + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
@@ -131,7 +131,7 @@ int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, so
 
     // Calculate checksum for the received data (without header)
     uint8_t *data = packet + Header_Size;
-    uint16_t checksum = calculate_checksum(data, data_length);
+    uint16_t checksum = calculate_checksum(data, data_length); 
 
     // Compare checksum with the checksum field in the header
     if (checksum != header.checksum) {
