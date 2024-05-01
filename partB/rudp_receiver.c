@@ -146,7 +146,6 @@ int main(int argc, char *argv[]) {
 
         size_t total_bytes_received = 0;
         uint8_t bytes_received;
-        int iteration = 0;
         while (total_bytes_received < FILE_SIZE) {
             // Receive the data
             if((bytes_received = rudp_recv(BUFFER_SIZE,sockfd, sender_addr, &addrlen, file) == -1)){
