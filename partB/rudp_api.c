@@ -137,7 +137,7 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
     if (checksum != header.checksum) {
         printf("Checksum mismatch: header checksum = %d, actual checksum = %d\n", header.checksum, checksum);
         free(packet);
-        return -2; // Return error code if checksum verification failed
+        return -1; // Return error code if checksum verification failed
     }
 
     // Compare length with the length field in the header
@@ -300,7 +300,7 @@ int rudp_socket_sender(const char *dest_ip, int dest_port, struct sockaddr_in *r
     //Set timeout for the socket
     struct timeval timeout;      
     timeout.tv_sec = 0;
-    timeout.tv_usec = 10000;
+    timeout.tv_usec = 500000;
     
     if (setsockopt (sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
                 sizeof timeout) < 0)
