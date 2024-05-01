@@ -140,7 +140,7 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
 
     // Compare length with the length field in the header
     if (header.length != data_length) {
-        printf("Length mismatch: header length = %d, actual length = %d\n", header.length, data_length);
+        printf("Length mismatch: header length = %d, actual length = %ld\n", header.length, data_length);
         free(packet);
         return -1; // Return error code if length mismatch
     }
