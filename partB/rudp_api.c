@@ -15,24 +15,25 @@
 Function to calculate the one's complement checksum of binary data
 Parameters:
 data: Pointer to the binary data buffer
-packet_length: Length of the data buffer in bytes
+data_length: Length of the data buffer in bytes
 Iterates over the data and sums it in 16bit and folds the sum. 
 Returns:
     The complement of sum
 */
 
-uint16_t calculate_checksum(const uint8_t *data, int packet_length) {
+uint16_t calculate_checksum(const uint8_t *data, int data_length) {
     uint16_t *data_pointer = (uint16_t *)data;
     uint32_t total_sum = 0;
-    printf("Packet length: %d\n", packet_length);
+    printf("Packet length: %d\n", data_length);
+    printf("Data value: %hhu\n", *data);
     // Main summing loop
-    while (packet_length > 1) {
+    while (data_length > 1) {
         total_sum += *data_pointer++;
-        packet_length -= 2;
+        data_length -= 2;
     }
 
     // Add left-over byte, if any
-    if (packet_length > 0)
+    if (data_length > 0)
         total_sum += *((uint8_t *)data_pointer);
     printf("Total sum: %d\n", total_sum);
     // Fold 32-bit sum to 16 bits
@@ -63,6 +64,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     
     // Calculate checksum for the data (you need to implement this function)
     header.checksum = calculate_checksum(data, data_length);
+    printf("Checksum: %d\n", header.checksum);
     
     // Allocate memory for the packet buffer
     uint8_t *packet = (uint8_t *)malloc(Header_Size + data_length);
@@ -78,8 +80,12 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     memcpy(packet + 2*sizeof(uint16_t), &(header.flag), sizeof(uint8_t)); // Copy flag
 
     // Copy the data into the packet buffer after the header
-    memcpy(packet + Header_Size , data, data_length);
+    memcpy(packet + Header_Size, data, data_length);
     
+    printf("Data in packet: %hhu\n", *(packet+Header_Size));
+    
+    memcpy(&header, packet, Header_Size);
+    printf("Checksum in packet: %d\n", header.checksum);
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, Header_Size + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
@@ -96,9 +102,9 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
 
 
 // Function to receive data over RUDP connection with custom header
-int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file) {
+int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen, FILE *file) {
     // Allocate memory for the packet buffer
-    uint8_t *packet = (uint8_t *)malloc(Header_Size + packet_length);
+    uint8_t *packet = (uint8_t *)malloc(Header_Size + data_length);
     if (packet == NULL) {
         return -1; // Return error code if memory allocation failed
     }
@@ -109,7 +115,7 @@ int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, so
     }
 
     // Receive the packet over the network using recvfrom
-    int bytes_received = recvfrom(sockfd, packet, Header_Size + packet_length, 0, (struct sockaddr *)src_addr, addrlen);
+    int bytes_received = recvfrom(sockfd, packet, Header_Size + data_length, 0, (struct sockaddr *)src_addr, addrlen);
     if (bytes_received == -1) {
         perror("recvfrom");
         free(packet);
@@ -120,18 +126,17 @@ int rudp_recv(size_t packet_length, int sockfd, struct sockaddr_in *src_addr, so
         printf("Timeout\n");
         return ETIMEDOUT;
     }
-
+    for(int i=0; i<5; i++)
+        printf("Data: %hhu\n", *(packet+i));
     // Extract header fields from the received packet
     RUDP_Header header;
     
     memcpy(&header, packet, Header_Size);
-
-    // Calculate data length
-    size_t data_length = packet_length - Header_Size;
-
+   
     // Calculate checksum for the received data (without header)
-    uint8_t *data = packet + Header_Size;
-    uint16_t checksum = calculate_checksum(data, data_length); 
+    uint8_t *data = packet;
+    data += Header_Size;
+    uint16_t checksum = calculate_checksum(data, data_length);
 
     // Compare checksum with the checksum field in the header
     if (checksum != header.checksum) {
@@ -242,8 +247,7 @@ int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
     // Perform handshake receive and obtain sender's address
     socklen_t addrlen = sizeof(*sender_addr);
 
-    // Generate a random byte for the handshake message
-    uint8_t handshake_byte = generate_random_byte();
+    
 
     // Receive the handshake-SYN message using RUDP
     int errorcode = rudp_recv(sizeof(uint8_t),sockfd, sender_addr, &addrlen, NULL);
@@ -261,6 +265,9 @@ int rudp_socket_receiver(int port, struct sockaddr_in *sender_addr) {
     printf("Handshake SYN message received.\n");
     printf("Sending handshake ACK message.\n");
 
+    // Generate a random byte for the handshake message
+    uint8_t handshake_byte = generate_random_byte();
+    
     // Send the handshake message using RUDP
     if (rudp_send(&handshake_byte, sizeof(handshake_byte), RUDP_ACK, sockfd, sender_addr, addrlen) == -1) {
         perror("Error sending handshake message\n");
