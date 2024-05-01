@@ -70,6 +70,8 @@ int main(int argc, char *argv[]) {
         printf("Error creating socket\n");
         return -1;
     }
+
+    socklen_t addrlen = sizeof(*receiver_addr);
     
 
     char decision = 'n';
@@ -113,7 +115,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Send the data to the receiver
-            if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+            if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -121,7 +123,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Receive ACK for current packet
-            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
 
             int retries = 0;
             // If not received ACK proerly
@@ -146,7 +148,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 //Timeout handling - send data again
-                if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                if(rudp_send(buffer, sizeof(uint8_t)*BUFFER_SIZE , RUDP_DATA, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -154,7 +156,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Receive ACK for current resent packet
-                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
                 retries++;
             }
             
@@ -162,7 +164,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Receive ACK message after all data has been sent
-        if(rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file) != 1){
+        if(rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file) != 1){
             printf("Unexpected flag received. Closing connection...\n");
             perror("Error receiving ACK for sent file");
             free(buffer);
@@ -189,7 +191,7 @@ int main(int argc, char *argv[]) {
 
         if (decision == 'n'){
             // Send the decision to the receiver
-            if(rudp_send((uint8_t *)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+            if(rudp_send((uint8_t *)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending decision");
                 free(buffer);
                 close(sockfd);
@@ -197,7 +199,7 @@ int main(int argc, char *argv[]) {
             }
 
             // Receive ACK for decision
-            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
 
             int retries = 0;
             // If not received ACK proerly
@@ -222,7 +224,7 @@ int main(int argc, char *argv[]) {
                 }
                 
                 //Timeout handling - send data again
-                if(rudp_send((uint8_t *)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                if(rudp_send((uint8_t *)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -230,7 +232,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Receive ACK for current resent packet
-                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
                 retries++;
             }
             break;
@@ -238,7 +240,7 @@ int main(int argc, char *argv[]) {
         else if (decision == 'y'){
 
             // Send the decision to the receiver
-            if(rudp_send((uint8_t *)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+            if(rudp_send((uint8_t *)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending decision");
                 free(buffer);
                 close(sockfd);
@@ -248,7 +250,7 @@ int main(int argc, char *argv[]) {
             printf("Waiting for the server to be ready...\n");
 
             // Receive ACK for decision
-            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+            int errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
 
             int retries = 0;
             // If not received ACK proerly
@@ -273,7 +275,7 @@ int main(int argc, char *argv[]) {
                 }
                 
                 //Timeout handling - send data again
-                if(rudp_send((uint8_t *)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, sizeof(receiver_addr)) == -1){
+                if(rudp_send((uint8_t *)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -281,7 +283,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // Receive ACK for current resent packet
-                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, (socklen_t *)sizeof(receiver_addr), file);
+                errorcode = rudp_recv(sizeof(uint8_t),sockfd, receiver_addr, &addrlen, file);
                 retries++;
             }
     

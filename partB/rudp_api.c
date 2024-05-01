@@ -79,7 +79,6 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
 
     // Copy the data into the packet buffer after the header
     memcpy(packet + Header_Size, data, data_length);
-    
     // Send the packet over the network using sendto
     int bytes_sent = sendto(sockfd, packet, Header_Size + data_length, 0, (struct sockaddr *)dest_addr, addrlen);
     
@@ -87,6 +86,7 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     free(packet);
     
     if (bytes_sent == -1) {
+        printf("Error sending data: %s\n", strerror(errno));
         perror("Failed to send packet\n");
         return -1; // Return error code if sending packet failed
     }
@@ -110,6 +110,7 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
 
     // Receive the packet over the network using recvfrom
     int bytes_received = recvfrom(sockfd, packet, Header_Size + data_length, 0, (struct sockaddr *)src_addr, addrlen);
+
     if (bytes_received == -1) {
         perror("recvfrom");
         free(packet);
