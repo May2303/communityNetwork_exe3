@@ -148,7 +148,6 @@ int main(int argc, char *argv[]) {
         uint8_t bytes_received;
         int iteration = 0;
         while (total_bytes_received < FILE_SIZE) {
-            printf("Iteration: %d\n" ,iteration++);
             // Receive the data
             if((bytes_received = rudp_recv(BUFFER_SIZE,sockfd, sender_addr, &addrlen, file) == -1)){
                 // Deal with errors
@@ -188,9 +187,9 @@ int main(int argc, char *argv[]) {
                 close(sockfd);
                 return -1;
             }
-            total_bytes_received += sizeof(buffer);
+            total_bytes_received += BUFFER_SIZE;
         }
-
+        
         //Send acknowledgment for the received file to sender
         if (rudp_send((const uint8_t *)&ack, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
             perror("Error writing to file");
