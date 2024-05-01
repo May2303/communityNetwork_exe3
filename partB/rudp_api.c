@@ -147,6 +147,7 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
     }
 
     // Handle the received packet based on the flag value
+    
     switch (header.flag) {
         case RUDP_ACK:
             // Handle ACK packet
@@ -168,20 +169,21 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
             break;
         case RUDP_DATA:
             // Open the file in "append binary" mode
-            file = fopen("received_data.bin", "ab");
+            file = fopen("received_file.bin", "ab");
             if (file == NULL) {
                 perror("fopen");
                 free(packet);
                 return -1; // Return error code if file opening failed
             }
-
+            printf("first data: %hhu", *data);
+            printf("Reached writing phase\n");
             // Write the received data to the file
-            fwrite(packet + sizeof(RUDP_Header), sizeof(uint8_t), data_length, file);
-            if (file != NULL) {
-                fclose(file);
-            }
-             free(packet);
-
+            fwrite(data, sizeof(uint8_t), data_length, file);
+            printf("Reached ending phase");
+            fclose(file);
+            
+            free(packet);
+            
             return 0; // Return success status code for DATA-flag packet
         default:
             // Invalid flag value

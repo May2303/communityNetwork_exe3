@@ -77,8 +77,6 @@ int main(int argc, char *argv[]) {
         printf("Error creating socket\n");
         return -1;
     }
-    
-    socklen_t addrlen = sizeof(struct sockaddr_in);
 
     
     // Convert the client's IP address from network format to presentation format
@@ -88,6 +86,8 @@ int main(int argc, char *argv[]) {
         close(sockfd);
         return -1;
     }
+
+    socklen_t addrlen = sizeof(*sender_addr);
 
     printf("Connected to %s:%d\n", client_ip, port);
 
@@ -137,6 +137,8 @@ int main(int argc, char *argv[]) {
             close(sockfd);
             return -1;
         }
+
+        fclose(file);
         
         start_time = clock();
 
@@ -145,7 +147,7 @@ int main(int argc, char *argv[]) {
 
         while (total_bytes_received < FILE_SIZE) {
             // Receive the data
-            if((bytes_received = rudp_recv(BUFFER_SIZE,sockfd, sender_addr, (socklen_t *)&addrlen, file) == -1)){
+            if((bytes_received = rudp_recv(BUFFER_SIZE,sockfd, sender_addr, &addrlen, file) == -1)){
                 // Deal with errors
                 perror("Error receiving file's content from client");
                 free(timeTaken);
@@ -154,6 +156,7 @@ int main(int argc, char *argv[]) {
                 close(sockfd);
                 return -1;
             // Deal with timeouts
+            printf("reached else\n");
             }else if(bytes_received == ETIMEDOUT){
                 printf("Client %s:%d disconnected.\n" , client_ip, port);
                 perror("Timeout receiving file's content from client");
@@ -199,7 +202,7 @@ int main(int argc, char *argv[]) {
         end_time = clock();
 
         printf("Received %zu bytes of data from %s:%d.\n", total_bytes_received, client_ip, port);
-        fclose(file);
+        
 
         updateStatistics(timeTaken, transferSpeed , start_time, end_time, total_bytes_received, iteration);
         iteration++;
@@ -208,7 +211,7 @@ int main(int argc, char *argv[]) {
 
         //Receive client's decision
         int decision_bytes;
-        decision_bytes = rudp_recv(sizeof(uint8_t),sockfd, sender_addr, (socklen_t *)&addrlen, file);
+        decision_bytes = rudp_recv(sizeof(uint8_t),sockfd, sender_addr, &addrlen, file);
         if (decision_bytes == -1) {
             perror("Error receiving client response");
             free(timeTaken);
