@@ -68,6 +68,8 @@ int main(int argc, char *argv[]) {
 
     int port = atoi(argv[2]);
 
+    uint8_t ack = RUDP_ACK;
+
     printf("Waiting for incoming RUDP connections...\n");
 
     // Create RUDP socket
@@ -144,8 +146,9 @@ int main(int argc, char *argv[]) {
 
         size_t total_bytes_received = 0;
         uint8_t bytes_received;
-
+        int iteration = 0;
         while (total_bytes_received < FILE_SIZE) {
+            printf("Iteration: %d\n" ,iteration++);
             // Receive the data
             if((bytes_received = rudp_recv(BUFFER_SIZE,sockfd, sender_addr, &addrlen, file) == -1)){
                 // Deal with errors
@@ -174,9 +177,9 @@ int main(int argc, char *argv[]) {
                 close(sockfd);
                 return -1;
             }
-        
             //Send acknowledgment for the received packet to sender
-            if (rudp_send((const uint8_t *)RUDP_ACK, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
+            
+            if (rudp_send((const uint8_t *)&ack, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
                 perror("Error writing to file");
                 free(timeTaken);
                 free(transferSpeed);
@@ -189,7 +192,7 @@ int main(int argc, char *argv[]) {
         }
 
         //Send acknowledgment for the received file to sender
-        if (rudp_send((const uint8_t *)RUDP_ACK, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
+        if (rudp_send((const uint8_t *)&ack, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
             perror("Error writing to file");
             free(timeTaken);
             free(transferSpeed);
@@ -232,7 +235,7 @@ int main(int argc, char *argv[]) {
         //Decision ' y ' received
         if (decision_bytes == 2) {
             printf("Client responded with 'y', sending ACK byte...\n");
-            if (rudp_send((const uint8_t *)RUDP_ACK, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
+            if (rudp_send((const uint8_t *)&ack, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
                 perror("Error sending sync byte");
                 free(timeTaken);
                 free(transferSpeed);
@@ -243,7 +246,7 @@ int main(int argc, char *argv[]) {
         //Decision ' n ' received
         } else if (decision_bytes == 3) {
             printf("Client responded with 'n', sending ACK byte...\n");
-            if (rudp_send((const uint8_t *)RUDP_ACK, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
+            if (rudp_send((const uint8_t *)&ack, sizeof(uint8_t), RUDP_ACK, sockfd, sender_addr, addrlen)!= 0) {
                 perror("Error sending sync byte");
                 free(timeTaken);
                 free(transferSpeed);

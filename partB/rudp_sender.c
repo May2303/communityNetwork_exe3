@@ -59,6 +59,9 @@ int main(int argc, char *argv[]) {
     int receiver_port = atoi(argv[4]);
     const char *file_name = "random_file.bin";
 
+    uint8_t syn = RUDP_SYN;
+    uint8_t fin = RUDP_FIN;
+
     // Generate random file of at least 2MB size
     size_t file_size_bytes = FILE_SIZE;
     generate_random_file(file_name, file_size_bytes);
@@ -191,7 +194,7 @@ int main(int argc, char *argv[]) {
 
         if (decision == 'n'){
             // Send the decision to the receiver
-            if(rudp_send((uint8_t *)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
+            if(rudp_send((uint8_t *)&fin, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending decision");
                 free(buffer);
                 close(sockfd);
@@ -224,7 +227,7 @@ int main(int argc, char *argv[]) {
                 }
                 
                 //Timeout handling - send data again
-                if(rudp_send((uint8_t *)RUDP_FIN, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
+                if(rudp_send((uint8_t *)&fin, sizeof(uint8_t) , RUDP_FIN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);
@@ -240,7 +243,7 @@ int main(int argc, char *argv[]) {
         else if (decision == 'y'){
 
             // Send the decision to the receiver
-            if(rudp_send((uint8_t *)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
+            if(rudp_send((uint8_t *)&syn, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending decision");
                 free(buffer);
                 close(sockfd);
@@ -275,7 +278,7 @@ int main(int argc, char *argv[]) {
                 }
                 
                 //Timeout handling - send data again
-                if(rudp_send((uint8_t *)RUDP_SYN, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
+                if(rudp_send((uint8_t *)&syn, sizeof(uint8_t) , RUDP_SYN, sockfd, receiver_addr, addrlen) == -1){
                 perror("Error sending file");
                 free(buffer);
                 close(sockfd);

@@ -26,10 +26,12 @@ uint16_t calculate_checksum(const uint8_t *data, int data_length) {
     uint32_t total_sum = 0;
 
     // Main summing loop
+    
     while (data_length > 1) {
         total_sum += *data_pointer++;
         data_length -= 2;
     }
+    
 
     // Add left-over byte, if any
     if (data_length > 0)
@@ -57,12 +59,12 @@ void rudp_close(int sockfd) {
 // Function to send data over RUDP connection with custom header
 int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd, struct sockaddr_in *dest_addr, socklen_t addrlen) {
     // Construct the RUDP header
-    RUDP_Header header;
-    header.length = data_length; // Set the length field
-    header.flag = flag; // Set the flag field
+    RUDP_Header* header = (RUDP_Header *)malloc(Header_Size);
+    header->length = data_length; // Set the length field
+    header->flag = flag; // Set the flag field
     
     // Calculate checksum for the data (you need to implement this function)
-    header.checksum = calculate_checksum(data, data_length);
+    header->checksum = calculate_checksum(data, data_length);
     
     // Allocate memory for the packet buffer
     uint8_t *packet = (uint8_t *)malloc(Header_Size + data_length);
@@ -73,9 +75,9 @@ int rudp_send(const uint8_t *data, size_t data_length, uint8_t flag, int sockfd,
     
     // Copy the header into the packet buffer
     // Serialize the header into the packet buffer
-    memcpy(packet, &(header.length), sizeof(uint16_t)); // Copy length
-    memcpy(packet + sizeof(uint16_t), &(header.checksum), sizeof(uint16_t)); // Copy checksum
-    memcpy(packet + 2*sizeof(uint16_t), &(header.flag), sizeof(uint8_t)); // Copy flag
+    memcpy(packet, &(header->length), sizeof(uint16_t)); // Copy length
+    memcpy(packet + sizeof(uint16_t), &(header->checksum), sizeof(uint16_t)); // Copy checksum
+    memcpy(packet + 2*sizeof(uint16_t), &(header->flag), sizeof(uint8_t)); // Copy flag
 
     // Copy the data into the packet buffer after the header
     memcpy(packet + Header_Size, data, data_length);
@@ -131,7 +133,6 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
     uint8_t *data = packet;
     data += Header_Size;
     uint16_t checksum = calculate_checksum(data, data_length);
-
     // Compare checksum with the checksum field in the header
     if (checksum != header.checksum) {
         printf("Checksum mismatch: header checksum = %d, actual checksum = %d\n", header.checksum, checksum);
@@ -151,7 +152,6 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
     switch (header.flag) {
         case RUDP_ACK:
             // Handle ACK packet
-            printf("Received ACK packet\n");
             free(packet);
             return 1;
             break;
@@ -175,11 +175,9 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
                 free(packet);
                 return -1; // Return error code if file opening failed
             }
-            printf("first data: %hhu", *data);
-            printf("Reached writing phase\n");
+        
             // Write the received data to the file
             fwrite(data, sizeof(uint8_t), data_length, file);
-            printf("Reached ending phase");
             fclose(file);
             
             free(packet);
