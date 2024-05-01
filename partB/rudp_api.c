@@ -114,14 +114,14 @@ int rudp_recv(size_t data_length, int sockfd, struct sockaddr_in *src_addr, sock
     int bytes_received = recvfrom(sockfd, packet, Header_Size + data_length, 0, (struct sockaddr *)src_addr, addrlen);
 
     if (bytes_received == -1) {
-        perror("recvfrom");
-        free(packet);
-        return -1; // Return error code if receiving packet failed
-    }
-
-    if(bytes_received == ETIMEDOUT){
-        printf("Timeout\n");
-        return ETIMEDOUT;
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == ETIMEDOUT) {
+            printf("Timeout\n");
+            return ETIMEDOUT; // Return ETIMEDOUT if timeout occurred
+        } else {
+            perror("recvfrom");
+            free(packet);
+            return -1; // Return error code if receiving packet failed for other reasons
+        }
     }
    
     // Extract header fields from the received packet
